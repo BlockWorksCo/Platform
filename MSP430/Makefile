@@ -7,11 +7,13 @@ CFLAGS=-mmcu=msp430g2553 -O2 -Wall -g -nostdlib
 LDFLAGS=-mmcu=msp430g2553 -g  -L./ -Wl,-Map=Output/Main.map -nostdlib
 
 
-INCLUDES=-I./
+INCLUDES+=-I./
+INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/Common
 
-VPATH=./
+VPATH+=./
+VPATH+=$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)
 
-LIBS=
+LIBS+=
 
 
 
