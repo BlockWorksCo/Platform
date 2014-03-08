@@ -6,12 +6,19 @@ CC=arm-none-eabi-g++
 LD=arm-none-eabi-g++
 OBJCOPY=arm-none-eabi-objcopy 
 RM=rm
-CFLAGS= -g -O0 -Wall -T$(ROCKETBLOX)/Platform/$(PLATFORM)/stm32_flash.ld -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -fsingle-precision-constant -Wdouble-promotion -mfpu=fpv4-sp-d16 -mfloat-abi=hard -nostdlib -fno-rtti -fno-exceptions -DSTM32F40XX
+CFLAGS= -g -O0 -Wall -T$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/stm32_flash.ld -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -fsingle-precision-constant -Wdouble-promotion -mfpu=fpv4-sp-d16 -mfloat-abi=hard -nostdlib -fno-rtti -fno-exceptions -DSTM32F40XX
 LDFLAGS=$(CFLAGS)  -lsupc++ -lc 
 
 
-INCLUDES+=-I./ -I$(ROCKETBLOX)/Platform/$(PLATFORM)/ -I$(ROCKETBLOX)/Platform -I$(ROCKETBLOX)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/inc -I$(ROCKETBLOX)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/CMSIS/Device/ST/STM32F4xx/Include
-VPATH=./ $(ROCKETBLOX)/Platform/$(PLATFORM) $(ROCKETBLOX)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/src
+
+INCLUDES+=-I./
+INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/Common
+INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/CMSIS/Device/ST/STM32F4xx/Include
+INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/inc
+
+VPATH+=./
+VPATH+=$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)
+VPATH+=$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/src
 
 LIBS=
 
