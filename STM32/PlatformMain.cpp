@@ -95,6 +95,30 @@ void init()
 
 
 
+
+
+extern unsigned long __preinit_array_start;
+extern unsigned long __preinit_array_end;
+extern unsigned long __init_array_start;
+extern unsigned long __init_array_end;
+extern unsigned long _ctor_start;
+extern unsigned long _ctor_end;
+static void call_constructors(unsigned long *start, unsigned long *end) __attribute__((noinline));
+static void call_constructors(unsigned long *start, unsigned long *end)
+{
+  unsigned long *i;
+  void (*funcptr)();
+  for ( i = start; i < end; i++)
+  {
+    funcptr=(void (*)())(*i);
+    funcptr();
+  }
+}
+
+
+
+
+
 //
 //
 //
@@ -104,6 +128,12 @@ int main()
 
     //init();
 
+	//
+	//Call C++ global constructors
+	//
+	call_constructors(&__preinit_array_start, &__preinit_array_end);
+	call_constructors(&__init_array_start, &__init_array_end);
+	//call_constructors(&_ctor_start, &_ctor_end);	
 
     //
     // Start the application.
