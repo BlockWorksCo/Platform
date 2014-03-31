@@ -124,6 +124,8 @@ static void call_constructors(unsigned long *start, unsigned long *end)
 //
 int main()
 {
+	SystemInit();
+	
     //printf("PlatformMain started.\n");
 
     //init();

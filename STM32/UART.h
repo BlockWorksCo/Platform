@@ -41,7 +41,7 @@ public:
 	//
 	//
 	//
-	void putc(char c)
+	void Put(char c)
 	{
 		//
 		// Put the byte-to-transmit in the queue.
@@ -52,6 +52,19 @@ public:
 		// Let the ISR empty the queue.
 		//
 		USART_ITConfig(usart, USART_IT_TXE, ENABLE);
+	}
+
+
+	//
+	// Utility routine.
+	//
+	void Put(const char *s)
+	{
+		while(*s)
+		{
+			Put(*s);
+			*s++;
+		}
 	}
 
 
@@ -105,7 +118,6 @@ private:
 	 */
 	void initialise()
 	{
-
 		/* This is a concept that has to do with the libraries provided by ST
 		 * to make development easier the have made up something similar to 
 		 * classes, called TypeDefs, which actually just define the common
