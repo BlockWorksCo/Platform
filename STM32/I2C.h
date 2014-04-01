@@ -9,11 +9,8 @@
 #include <stm32f4xx_gpio.h>
 #include <stm32f4xx_rcc.h>
 #include <stm32f4xx.h>
-#include <misc.h>			 // I recommend you have a look at these in the ST firmware folder
+#include <misc.h>
 #include <stm32f4xx_i2c.h>
-
-#include <misc.h>			 // I recommend you have a look at these in the ST firmware folder
-#include <stm32f4xx_usart.h> // under Libraries/STM32F4xx_StdPeriph_Driver/inc and src
 
 
 
@@ -123,170 +120,19 @@ public:
 		while(state != i2cIdle);
 	}
 
-	/* This function issues a start condition and 
-	 * transmits the slave address + R/W bit
-	 * 
-	 * Parameters:
-	 * 		I2Cx --> the I2C peripheral e.g. I2C1
-	 * 		address --> the 7 bit slave address
-	 * 		direction --> the tranmission direction can be:
-	 * 						I2C_Direction_Tranmitter for Master transmitter mode
-	 * 						I2C_Direction_Receiver for Master receiver
-	 */
-	void Start(uint8_t _address, uint8_t _direction)
-	{
-		address 	= _address;
-		direction 	= _direction;
-
-		// wait until I2C1 is not busy anymore
-		{
-			uint32_t i=0; 		
-			while( (I2C_GetFlagStatus(I2Cx, I2C_FLAG_BUSY)) && (i<10000)) i++;
-		}
-		//BusyWaitTillIdle();
-	  
-		// Send I2C1 START condition 
-		I2C_GenerateSTART(I2Cx, ENABLE);
-
-		// wait for I2C1 EV5 --> Slave has acknowledged start condition
-#if 0		
-		{
-			uint32_t i=0; 		
-			while((!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_MODE_SELECT)) && (i<10000)) i++;
-		}
-		//BusyWaitTillIdle();
-#endif
-		// Send slave Address for write 
-		I2C_Send7bitAddress(I2Cx, address, direction);
-
-		/* wait for I2C1 EV6, check if 
-		 * either Slave has acknowledged Master transmitter or
-		 * Master receiver mode, depending on the transmission
-		 * direction
-		 */ 
-		//BusyWaitTillIdle();
-#if 0		 
-		if(direction == I2C_Direction_Transmitter)
-		{
-			{
-				uint32_t i=0; 		
-				while((!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) && (i<10000)) i++;
-			}
-		}
-		else if(direction == I2C_Direction_Receiver)
-		{
-			{
-				uint32_t i=0; 		
-				while((!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) && (i<10000)) i++;
-			}
-		}
-#endif		
-	}
-
-
-	/* This function transmits one byte to the slave device
-	 * Parameters:
-	 *		I2Cx --> the I2C peripheral e.g. I2C1 
-	 *		data --> the data byte to be transmitted
-	 */
-	void Write(uint8_t data)
-	{
-		I2C_SendData(I2Cx, data);
-		// wait for I2C1 EV8_2 --> byte has been transmitted
-		while(!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
-	}
-
-
-	/* This function reads one byte from the slave device 
-	 * and acknowledges the byte (requests another byte)
-	 */
-	uint8_t ReadACK()
-	{
-		// enable acknowledge of recieved data
-		I2C_AcknowledgeConfig(I2Cx, ENABLE);
-		// wait until one byte has been received
-		while( !I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED) );
-		// read data from I2C data register and return data byte
-		uint8_t data = I2C_ReceiveData(I2Cx);
-		return data;
-	}
-
-	/* This function reads one byte from the slave device
-	 * and doesn't acknowledge the recieved data 
-	 */
-	uint8_t ReadNACK()
-	{
-		// disabe acknowledge of received data
-		// nack also generates stop condition after last byte received
-		// see reference manual for more info
-		I2C_AcknowledgeConfig(I2Cx, DISABLE);
-		I2C_GenerateSTOP(I2Cx, ENABLE);
-		// wait until one byte has been received
-		while( !I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED) );
-		// read data from I2C data register and return data byte
-		uint8_t data = I2C_ReceiveData(I2Cx);
-		return data;
-	}
-
-	/* This funtion issues a stop condition and therefore
-	 * releases the bus
-	 */
-	void Stop()
-	{
-		// Send I2C1 STOP Condition 
-		I2C_GenerateSTOP(I2Cx, ENABLE);
-	}
-
-
-
 
 	//
-	//
+	// Process the master command queue.
 	//
 	bool ProcessQueue()
 	{
 		bool		dataAvailableFlag	= false;
-		I2CCommand 	command				= rxQueue.Get(dataAvailableFlag);
+		I2CCommand 	command				= txQueue.Get(dataAvailableFlag);
 
 		if(dataAvailableFlag == true)
 		{
 			switch(command.type)
 			{
-
-				case i2cMasterWrite:
-				{
-					//
-					// I2C Master Write
-					//
-					Start(command.target<<1, I2C_Direction_Transmitter);
-					for(uint32_t i=0; i<command.numberOfBytes; i++)
-					{
-						Write(command.payload[i]);
-					}
-					Stop();
-
-					break;
-				}
-
-
-				case i2cMasterRead:
-				{
-					uint32_t i;
-
-					//
-					// I2C Master Read
-					//
-					Start(command.target<<1, I2C_Direction_Receiver); 		// start a transmission in Master receiver mode
-					for(i=0; i<command.numberOfBytes-1; i++)
-					{
-						command.payload[i] = ReadACK(); // read one byte and request another byte
-					}
-					command.payload[i] = ReadNACK();	// read one byte and don't request another byte, stop transmission
-
-					break;
-				}
-
-
 				default:
 				{
 					break;
@@ -338,121 +184,6 @@ public:
 		//
 		switch(state)
 		{
-			case i2cStart:
-			{
-				//
-				// Start generation.
-				//
-				switch(subState)
-				{
-					case 0:
-					{
-						if( I2C_GetFlagStatus(I2Cx, I2C_FLAG_BUSY) == false)
-						{
-							// Send I2C1 START condition 
-							I2C_GenerateSTART(I2Cx, ENABLE);
-							subState++;
-						}
-						break;							
-					}
-
-					case 1:
-					{
-						if( I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_MODE_SELECT) == false)
-						{
-							// Send slave Address for write 
-							I2C_Send7bitAddress(I2Cx, address, direction);
-
-							subState++;
-						}
-						break;							
-					}
-
-					case 2:
-					{
-						if(			(direction == I2C_Direction_Transmitter) &&
-									(I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED) == false))
-						{
-							state 	= i2cIdle;
-						}
-						else if(	(direction == I2C_Direction_Receiver) && 
-									( I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED) == false ))
-						{
-							state 	= i2cIdle;
-						}
-						break;							
-					}
-
-					default:
-					{
-						break;
-					}
-				}
-
-				break;
-			}
-
-
-			case i2cWrite:
-			{
-				//
-				// MasterWrite.
-				//
-
-				//I2C_SendData(I2Cx, data);
-
-				// wait for I2C1 EV8_2 --> byte has been transmitted
-				if(I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_TRANSMITTED) == false)
-				{
-					state 	= i2cIdle;
-				}
-
-
-				break;
-			}
-
-
-			case i2cReadACK:
-			{
-				//
-				// ReadACK.
-				//
-
-				// enable acknowledge of recieved data
-				//I2C_AcknowledgeConfig(I2Cx, ENABLE);
-				// wait until one byte has been received
-				if( I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED) == false)
-				{
-					// read data from I2C data register and return data byte
-					receivedData = I2C_ReceiveData(I2Cx);
-					state 	= i2cIdle;
-				}
-
-				break;
-			}
-
-
-			case i2cReadNACK:
-			{
-				//
-				// ReadNACK.
-				//
-
-				// disable acknowledge of received data
-				// nack also generates stop condition after last byte received
-				// see reference manual for more info
-				//I2C_AcknowledgeConfig(I2Cx, DISABLE);
-				//I2C_GenerateSTOP(I2Cx, ENABLE);
-				// wait until one byte has been received
-				if( I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED) == false)
-				{
-					receivedData = I2C_ReceiveData(I2Cx);
-					state 	= i2cIdle;
-				}
-
-				break;
-			}
-
 
 			case i2cIdle:
 			{
@@ -465,7 +196,6 @@ public:
 			        // *Note: Cleared by read of SR1/2 above.
 					//
 					I2Cx->SR1 &= (~0x0002);
-					state = i2cIdle;
 				}
 
 				if( (sr1&0x0040) != 0)		// RxNE bit
@@ -474,7 +204,8 @@ public:
 					// The data buffer os full. Read the byte from it.
 					//
 			        uint8_t 	receivedByte 	= I2Cx->DR;
-					state = i2cIdle;
+					rxQueue.Put(receivedByte, queueTooSmallFlag);
+
 				}
 
 				if( (sr1&0x0080) != 0)		// TxE bit
@@ -484,7 +215,6 @@ public:
 					//
 			        I2Cx->DR 	= counter;
 			        counter++;
-					state = i2cIdle;
 				}
 
 				if( (sr1&0x0010) != 0)		// STOPF bit
@@ -495,39 +225,14 @@ public:
 			        // cleared and DR filled with the data to be sent
 					//
 					I2Cx->SR1 &= (~0x0010);
-					state = i2cIdle;
 				}
-
-#if 0
- switch (I2C_GetLastEvent(I2C2))
-    {
-    //The address sent by the master matches the own address of the peripheral
-    case I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED:
-        //The slave stretches SCL low until ADDR is
-        //cleared and DR filled with the data to be sent
-        I2C_ClearFlag(I2C2,I2C_FLAG_ADDR);
-        break;
-
-    //The application is expecting a data byte to be received
-    case I2C_EVENT_SLAVE_BYTE_RECEIVED:
-        I2C_ReceiveData(I2C2);
-        break;
-
-    //The application is expecting the end of the communication
-    //Make sure that both ADDR and STOPF flags are cleared
-    //if both are found set.
-    case I2C_EVENT_SLAVE_STOP_DETECTED:
-        if(I2C_GetFlagStatus(I2C2,I2C_FLAG_ADDR) == SET)
-            I2C_ClearFlag(I2C2,I2C_FLAG_ADDR);
-        if(I2C_GetFlagStatus(I2C2,I2C_FLAG_STOPF) == SET)
-            I2C_ClearFlag(I2C2,I2C_FLAG_STOPF);
-}
-#endif				
+				
 			}
 
 
 			default:
 			{
+				//while(1);
 				break;
 			}
 		}
@@ -536,33 +241,15 @@ public:
 
 
 	//
-	//
+	// Called from interrupt level to service the I2C event IRQ.
 	//
 	void EventISR(void)
 	{
 		StateMachine(state,	subState);
-#if 0		
-		bool		dataAvailableFlag	= false;
-		I2CCommand 	command				= rxQueue.Peek(dataAvailableFlag);
-
-		if(dataAvailableFlag == true)
-		{			
-			//
-			// Process events.
-			//
-			StateMachine(state,	subState);
-		}
-		else
-		{
-			//
-			// Error? Event without command in progress.
-			//
-			state = i2cIdle;
-		}
-#endif		
 	}
 
 	//
+	// Called from interrupt level to service the I2C error IRQ.
 	// Errors can be:
 	// - Buss Error
 	// - Arbitration Loss.
@@ -571,28 +258,9 @@ public:
 	//
 	void ErrorISR(void)
 	{
-#if 0		
 		//
-		// Check on I2C1 AF flag and clear it
+		// TODO: Report the errors back.
 		//
-		if (I2C_GetITStatus(I2Cx, I2C_IT_AF)) 
-		{
-			I2CCommand	command;
-
-			//
-			// Form a command and put it in the I2C receive queue.
-			//
-			command.type 			= i2cError;
-			command.payload[0] 		= 0;
-			command.numberOfBytes 	= 0;
-			txQueue.Put(command, queueTooSmallFlag);
-
-			//
-			// Clear the condition.
-			//
-			I2C_ClearITPendingBit(I2Cx, I2C_IT_AF);
-		}
-#endif		
 	}
 
 
