@@ -305,13 +305,32 @@ public:
 	//
 	void StateMachine(I2CState&	state,	uint8_t& subState)
 	{
-		uint16_t 	sr1			= I2Cx->SR1;
-		uint16_t 	sr2			= I2Cx->SR2;
-		bool 		slaveMode	= false;
+		static uint8_t	counter 				= 0;
+		uint16_t 		sr1						= I2Cx->SR1;
+		uint16_t 		sr2						= I2Cx->SR2;
+		bool 			slaveMode				= false;
+		bool 			busBusy					= false;
+		bool 			receiveMode				= false;
+		bool 			byteTransferFinished	= false;
 
 		if( (sr2&0x0001) == 0)		// MSL bit.
 		{
-			slaveMode	= true;
+			slaveMode				= true;
+		}
+
+		if( (sr2&0x0002) != 0)		// BUSY bit.
+		{
+			busBusy					= true;
+		}
+
+		if( (sr2&0x0004) == 0)		// TRA bit.
+		{
+			receiveMode				= true;
+		}
+
+		if( (sr1&0x0004) != 0)		// BTF bit.
+		{
+			byteTransferFinished	= true;
 		}
 
 		//
@@ -445,17 +464,37 @@ public:
 			        // cleared and DR filled with the data to be sent
 			        // *Note: Cleared by read of SR1/2 above.
 					//
+					I2Cx->SR1 &= (~0x0002);
+					state = i2cIdle;
+				}
+
+				if( (sr1&0x0040) != 0)		// RxNE bit
+				{
+					//
+					// The data buffer os full. Read the byte from it.
+					//
+			        uint8_t 	receivedByte 	= I2Cx->DR;
 					state = i2cIdle;
 				}
 
 				if( (sr1&0x0080) != 0)		// TxE bit
 				{
 					//
+					// The transmit buffer is empty, put data into it to send to the master.					
+					//
+			        I2Cx->DR 	= counter;
+			        counter++;
+					state = i2cIdle;
+				}
+
+				if( (sr1&0x0010) != 0)		// STOPF bit
+				{
+					//
 					// Slave mode address acknowledged.
 			        // The slave stretches SCL low until ADDR is
 			        // cleared and DR filled with the data to be sent
 					//
-			        I2Cx->DR 	= 0xab;
+					I2Cx->SR1 &= (~0x0010);
 					state = i2cIdle;
 				}
 
@@ -532,6 +571,7 @@ public:
 	//
 	void ErrorISR(void)
 	{
+#if 0		
 		//
 		// Check on I2C1 AF flag and clear it
 		//
@@ -552,6 +592,7 @@ public:
 			//
 			I2C_ClearITPendingBit(I2Cx, I2C_IT_AF);
 		}
+#endif		
 	}
 
 
