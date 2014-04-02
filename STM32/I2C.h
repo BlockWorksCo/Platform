@@ -84,6 +84,9 @@ public:
 		subState(0),
 		errorFlags(0)
 	{
+
+		currentCommand.numberOfBytes 	= 0;
+
 		initialise();
 	}
 
@@ -197,6 +200,17 @@ public:
 			        // *Note: Cleared by read of SR1/2 above.
 					//
 					I2Cx->SR1 &= (~0x0002);
+
+					if(receiveMode == true)
+					{
+						//
+						// We're starting a slave-write transaction so we're
+						// about to receive data from the master.
+						//
+						currentCommand.numberOfBytes 	= 0;
+						currentCommand.type 			= i2cSlaveWrite;
+						currentCommand.target 			= I2Cx->OAR1;		// 7-bit address for now. TODO: support 10-bit.
+					}
 				}
 
 				if( (sr1&0x0040) != 0)		// RxNE bit
@@ -204,12 +218,10 @@ public:
 					//
 					// The data buffer os full. Read the byte from it.
 					//
-			        uint8_t 	receivedByte 	= I2Cx->DR;
-					rxQueue.Put(receivedByte, queueTooSmallFlag);
-
+			        currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
+			        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
 				}
-
-				if( (sr1&0x0080) != 0)		// TxE bit
+				else if( (sr1&0x0080) != 0)		// TxE bit
 				{
 					//
 					// The transmit buffer is empty, put data into it to send to the master.					
@@ -227,6 +239,14 @@ public:
 					//
 					I2Cx->SR1 &= (~0x0010);
 					I2Cx->CR1 &= (~0x0200);
+
+					//
+					// Transaction has finished, lets put the command in the queue for the App to process.
+					//
+					for(int i=0; i<currentCommand.numberOfBytes; i++)
+					{
+						rxQueue.Put(currentCommand.payload[i], queueTooSmallFlag);
+					}
 				}
 				
 			}
@@ -390,6 +410,8 @@ private:
 	uint8_t 		direction;
 
 	uint16_t		errorFlags;
+
+	I2CCommand 		currentCommand;
 
 };
 
