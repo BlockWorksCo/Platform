@@ -81,7 +81,8 @@ public:
 		I2Cx((I2C_TypeDef*)PortBase),
 		queueTooSmallFlag(false),
 		state(i2cIdle),
-		subState(0)
+		subState(0),
+		errorFlags(0)
 	{
 		initialise();
 	}
@@ -225,6 +226,7 @@ public:
 			        // cleared and DR filled with the data to be sent
 					//
 					I2Cx->SR1 &= (~0x0010);
+					I2Cx->CR1 &= (~0x0200);
 				}
 				
 			}
@@ -261,6 +263,30 @@ public:
 		//
 		// TODO: Report the errors back.
 		//
+		uint32_t 	SR1Register;
+		uint32_t 	SR2Register;
+
+		/* Read the I2C1 status register */
+		SR1Register = I2C1->SR1;
+		if(SR1Register & 0x0F00) 
+		{	//an error
+			errorFlags	= ((SR1Register&0x0F00)>>8);//save error
+		}
+
+		/* If AF or BERR, send STOP*/
+		if(SR1Register & 0x0500)
+		{
+			I2C_GenerateSTOP(I2C1,ENABLE);//program the Stop			
+		}
+
+		/* If AF, BERR or ARLO, abandon the current job and send a start to commence new */
+		if(SR1Register & 0x0700) 
+		{
+			SR2Register = I2C1->SR2;//read second status register to clear ADDR if it is set (note that BTF will not be set after a NACK)
+			I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable the RXNE/TXE interrupt - prevent the ISR tailchaining onto the ER (hopefully)
+		}
+
+		I2C1->SR1 &=~0x0F00;		//reset all the error bits to clear the interrupt		
 	}
 
 
@@ -292,7 +318,6 @@ private:
 		NVIC_InitStructure.NVIC_IRQChannelSubPriority 			= 0;		 					// this sets the subpriority inside the group
 		NVIC_InitStructure.NVIC_IRQChannelCmd 					= ENABLE;			 			// the I2C1 interrupts are globally enabled
 		NVIC_Init(&NVIC_InitStructure);							 // the properties are passed to the NVIC_Init function which takes care of the low level stuff	
-
 		//
 		// I2C initialise
 		//
@@ -363,6 +388,8 @@ private:
 	uint8_t 		receivedData;
 	uint16_t		address;
 	uint8_t 		direction;
+
+	uint16_t		errorFlags;
 
 };
 
