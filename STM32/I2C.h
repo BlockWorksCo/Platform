@@ -239,6 +239,10 @@ public:
 					// The transmit buffer is empty, put data into it to send to the master.					
 					//
 			        I2Cx->DR 	= counter;
+
+			        currentCommand.payload[currentCommand.numberOfBytes] = counter;
+			        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
+
 			        counter++;
 				}
 
@@ -302,10 +306,28 @@ public:
 			errorFlags	= ((SR1Register&0x0F00)>>8);//save error
 		}
 
-		/* If AF or BERR, send STOP*/
-		if(SR1Register & 0x0500)
+		/* If AF, send STOP*/
+		if(SR1Register & 0x0400)
+		{
+			I2C_GenerateSTOP(I2C1, ENABLE);//program the Stop			
+
+			//
+			// Transaction has finished, lets put the command in the queue for the App to process.
+			//
+			rxQueue.Put(currentCommand, queueTooSmallFlag);			
+		}
+
+		/* If BERR, send STOP*/
+		if(SR1Register & 0x0100)
 		{
 			I2C_GenerateSTOP(I2C1,ENABLE);//program the Stop			
+
+			//
+			// Transaction has finished, lets put the command in the queue for the App to process.
+			//
+			currentCommand.type 			= i2cError;
+			currentCommand.numberOfBytes 	= 0;
+			rxQueue.Put(currentCommand, queueTooSmallFlag);			
 		}
 
 		/* If AF, BERR or ARLO, abandon the current job and send a start to commence new */

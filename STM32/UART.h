@@ -38,34 +38,25 @@ public:
 	}
 
 
+
 	//
+	// Process the master command queue.
 	//
-	//
-	void Put(char c)
+	bool ProcessQueue()
 	{
-		//
-		// Put the byte-to-transmit in the queue.
-		//
-		txQueue.Put(c, queueTooSmallFlag);
-
-		//
-		// Let the ISR empty the queue.
-		//
-		USART_ITConfig(usart, USART_IT_TXE, ENABLE);
-	}
-
-
-	//
-	// Utility routine.
-	//
-	void Put(const char *s)
-	{
-		while( (*s) != 0)
+		if(txQueue.IsEmpty() == false)
 		{
-			Put(*s);
-			s++;
+			//
+			// Let the ISR empty the queue.
+			//
+			USART_ITConfig(usart, USART_IT_TXE, ENABLE);
+			return true;
 		}
+
+		return false;
 	}
+
+
 
 
 	//
