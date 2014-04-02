@@ -201,15 +201,27 @@ public:
 					//
 					I2Cx->SR1 &= (~0x0002);
 
+					if(slaveMode == true)
+					{
+						currentCommand.numberOfBytes 	= 0;
+						currentCommand.target 			= I2Cx->OAR1;		// 7-bit address for now. TODO: support 10-bit.						
+					}
+
 					if(receiveMode == true)
 					{
 						//
 						// We're starting a slave-write transaction so we're
 						// about to receive data from the master.
 						//
-						currentCommand.numberOfBytes 	= 0;
 						currentCommand.type 			= i2cSlaveWrite;
-						currentCommand.target 			= I2Cx->OAR1;		// 7-bit address for now. TODO: support 10-bit.
+					}
+					else
+					{
+						//
+						// We're starting a slave-read transaction so we're
+						// about to transmit data to the master.
+						//
+						currentCommand.type 			= i2cSlaveRead;
 					}
 				}
 
@@ -243,10 +255,7 @@ public:
 					//
 					// Transaction has finished, lets put the command in the queue for the App to process.
 					//
-					for(int i=0; i<currentCommand.numberOfBytes; i++)
-					{
-						rxQueue.Put(currentCommand.payload[i], queueTooSmallFlag);
-					}
+					rxQueue.Put(currentCommand, queueTooSmallFlag);
 				}
 				
 			}
