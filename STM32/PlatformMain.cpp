@@ -118,6 +118,11 @@ static void call_constructors(unsigned long *start, unsigned long *end)
 
 
 
+extern "C" void __cxa_pure_virtual() 
+{ 
+	while (1); 
+}
+
 
 //
 //

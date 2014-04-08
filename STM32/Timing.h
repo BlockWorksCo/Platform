@@ -22,7 +22,7 @@ public:
 	//
 	Timing() :
 		TIMx((TIM_TypeDef*)PortBase),
-		currentTimestamp(0)
+		microsecondCounter(0)
 	{
 		initialise();
 		LED_Config();
@@ -39,14 +39,14 @@ public:
 	    	//
 	    	// Just increment the millisecond counter.
 	    	//
-	    	currentTimestamp++;
+	    	microsecondCounter	+= 10;
 
 	        TIM_ClearITPendingBit(TIMx, TIM_IT_Update);
 
 	        //
 	        // Toggle the LED at 2Hz
 	        //
-	        if((currentTimestamp % 500) == 0)
+	        //if((millisecondCounter % 500) == 0)
 	        {
 	        	GPIO_ToggleBits(GPIOD, GPIO_Pin_13);	        	        	
 	        }
@@ -58,29 +58,30 @@ public:
 	//
 	TimestampType GetTick()
 	{
-		return currentTimestamp;
+		return microsecondCounter;
 	}
 
 	//
-	// BUsy wait for the specified number of milliseconds.
+	// Busy wait for the specified number of milliseconds.
 	//
 	void BusyWait(uint32_t numberOfMilliseconds)
 	{
 		//
 		// Wait until we have a clean millisecond boundary...
 		//
-		TimestampType	partialPeriod 	= currentTimestamp;
+		TimestampType	partialPeriod 	= microsecondCounter;
 		do
 		{
-		} while(currentTimestamp == partialPeriod);
+		} while(partialPeriod == microsecondCounter);
 
 		//
+		// We are now at the beginning of a period...
 		// Now wait for the specified number of milliseconds.
 		//
-		TimestampType	endPeriod 		= currentTimestamp+numberOfMilliseconds;
+		TimestampType	endPeriod 		= microsecondCounter+(numberOfMilliseconds*1000);
 		do
 		{
-		} while(currentTimestamp != endPeriod);
+		} while(microsecondCounter != endPeriod);
 	}
 
 private:
@@ -125,7 +126,7 @@ private:
 		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 
 		/* Time base configuration */
-		TIM_TimeBaseStructure.TIM_Period 			= 1000 - 1; // 1 MHz down to 1 KHz (1 ms)
+		TIM_TimeBaseStructure.TIM_Period 			= 10 - 1; // 1 MHz down to 1 KHz (1 ms)
 		TIM_TimeBaseStructure.TIM_Prescaler 		= 84 - 1; // 24 MHz Clock down to 1 MHz (adjust per your clock)
 		TIM_TimeBaseStructure.TIM_ClockDivision 	= 0;
 		TIM_TimeBaseStructure.TIM_CounterMode 		= TIM_CounterMode_Up;
@@ -140,8 +141,11 @@ private:
 
 
 	TIM_TypeDef*	TIMx;
-	TimestampType	currentTimestamp;
+	TimestampType	microsecondCounter;
 };
+
+
+
 
 
 
