@@ -82,6 +82,8 @@ public:
 		queueTooSmallFlag(false),
 		state(i2cIdle),
 		subState(0),
+		slaveResponseData(0),
+		numberOfResponseBytes(0),
 		errorFlags(0)
 	{
 
@@ -90,6 +92,15 @@ public:
 		initialise();
 	}
 
+
+	//
+	//
+	//
+	void SetSlaveResponse(uint8_t* response, uint16_t _numberOfResponseBytes)
+	{
+		slaveResponseData 		= response;
+		numberOfResponseBytes	= _numberOfResponseBytes;
+	}
 
 	//
 	//
@@ -228,7 +239,7 @@ public:
 				if( (sr1&0x0040) != 0)		// RxNE bit
 				{
 					//
-					// The data buffer os full. Read the byte from it.
+					// The data buffer is full. Read the byte from it.
 					//
 			        currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
 			        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
@@ -238,12 +249,15 @@ public:
 					//
 					// The transmit buffer is empty, put data into it to send to the master.					
 					//
-			        I2Cx->DR 	= counter;
+			        I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
+			        //I2Cx->DR 	= currentCommand.numberOfBytes;
 
-			        currentCommand.payload[currentCommand.numberOfBytes] = counter;
-			        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
-
-			        counter++;
+			        //
+			        // Store what we've transmitted into the currentCommand payload so we can notify the host of 
+			        // what we've transmitted back to the master.
+			        //
+			        currentCommand.payload[currentCommand.numberOfBytes] = slaveResponseData[currentCommand.numberOfBytes];
+			        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % numberOfResponseBytes;
 				}
 
 				if( (sr1&0x0010) != 0)		// STOPF bit
@@ -409,7 +423,7 @@ private:
 		I2C_InitStruct.I2C_ClockSpeed 			= speed; 						// 100kHz
 		I2C_InitStruct.I2C_Mode 				= I2C_Mode_I2C;					// I2C mode
 		I2C_InitStruct.I2C_DutyCycle 			= I2C_DutyCycle_2;				// 50% duty cycle --> standard
-		I2C_InitStruct.I2C_OwnAddress1 			= ownAddress;					// own address, not relevant in master mode
+		I2C_InitStruct.I2C_OwnAddress1 			= ownAddress<<1;				// own address, not relevant in master mode
 		I2C_InitStruct.I2C_Ack 					= I2C_Ack_Enable;				// disable acknowledge when reading (can be changed later on)
 		I2C_InitStruct.I2C_AcknowledgedAddress 	= I2C_AcknowledgedAddress_7bit; // set address length to 7 bit addresses
 		I2C_Init(I2Cx, &I2C_InitStruct);										// init I2C1
@@ -443,6 +457,10 @@ private:
 	uint16_t		errorFlags;
 
 	I2CCommand 		currentCommand;
+
+	uint8_t* 		slaveResponseData;
+	uint16_t		numberOfResponseBytes;
+
 
 };
 
