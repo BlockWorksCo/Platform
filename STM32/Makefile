@@ -30,6 +30,7 @@ OBJS+=stm32f4xx_usart.o
 OBJS+=stm32f4xx_rcc.o
 OBJS+=stm32f4xx_gpio.o
 OBJS+=stm32f4xx_dac.o
+OBJS+=stm32f4xx_tim.o
 OBJS+=misc.o
 
 
