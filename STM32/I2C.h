@@ -196,11 +196,6 @@ public:
 			receiveMode				= true;
 		}
 
-		if( (sr1&0x0004) != 0)		// BTF bit.
-		{
-			byteTransferFinished	= true;
-		}
-
 		//
 		//
 		//
@@ -245,6 +240,9 @@ public:
 
 				if( (sr1&0x0040) != 0)		// RxNE bit
 				{
+					I2Cx->CR1 	&= ~0x400;
+					I2C_StretchClockCmd(I2Cx, ENABLE);
+
 					//
 					// The data buffer is full. Read the byte from it.
 					//
@@ -253,8 +251,8 @@ public:
 				}
 				else if( (sr1&0x0080) != 0)		// TxE bit
 				{
-					respondToSlaveReadHandler();
-					//eventEngine.Put(respondToSlaveReadHandler, eventQTooSmallFlag);
+					//respondToSlaveReadHandler();
+					eventEngine.Put(respondToSlaveReadHandler, eventQTooSmallFlag);
 				}
 
 				if( (sr1&0x0010) != 0)		// STOPF bit
@@ -294,9 +292,6 @@ public:
 	//
 	void ErrorISR(void)
 	{
-		//
-		// TODO: Report the errors back.
-		//
 		uint32_t 	SR1Register;
 		uint32_t 	SR2Register;
 
@@ -367,10 +362,18 @@ public:
 	//
 	void RespondToSlaveRead()
 	{
+		uint16_t 		sr1						= I2Cx->SR1;
+		uint16_t 		sr2						= I2Cx->SR2;
+
 		//
 		// The transmit buffer is empty, put data into it to send to the master.					
 		//
         I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
+
+		//
+		// Clear the BTF bit.
+		//
+		//I2Cx->SR1 	&= ~0x0004;
 
         //
         // Store what we've transmitted into the currentCommand payload so we can notify the host of 
@@ -378,6 +381,12 @@ public:
         //
         currentCommand.payload[currentCommand.numberOfBytes] = slaveResponseData[currentCommand.numberOfBytes];
         currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % numberOfResponseBytes;		
+
+		//
+		// Set the ACK bit.
+		//
+		I2Cx->CR1 	|= 0x400;
+		I2C_StretchClockCmd(I2Cx, DISABLE);
 	}
 
 
