@@ -86,15 +86,14 @@ public:
 		subState(0),
 		slaveResponseData(0),
 		numberOfResponseBytes(0),
-		slaveReadStretchDuration(0),
 		errorFlags(0),
 		eventEngine(_eventEngine),
 		respondToSlaveReadHandler(this, &I2C::RespondToSlaveRead),
 		slaveModeAddressAckHandler(this, &I2C::slaveModeAddressAck),
-		eventQTooSmallFlag(false)
+		eventQTooSmallFlag(false)		
 	{
-		currentCommand.numberOfBytes 	= 0;
 
+		currentCommand.numberOfBytes 	= 0;
 
 		initialise();
 	}
@@ -196,6 +195,11 @@ public:
 			receiveMode				= true;
 		}
 
+		if( (sr1&0x0004) != 0)		// BTF bit.
+		{
+			byteTransferFinished	= true;
+		}
+
 		//
 		//
 		//
@@ -238,29 +242,29 @@ public:
 					}
 				}
 
+				if( (sr1&0x0010) != 0)		// STOPF bit
+				{
+					//slaveModeAddressAck();
+					//I2Cx->SR1 &= (~0x0010);
+					I2Cx->CR1 &= (~0x0200);
+					eventEngine.Put(slaveModeAddressAckHandler, eventQTooSmallFlag);
+				}
+				
 				if( (sr1&0x0040) != 0)		// RxNE bit
 				{
-					I2Cx->CR1 	&= ~0x400;
-					I2C_StretchClockCmd(I2Cx, ENABLE);
-
 					//
 					// The data buffer is full. Read the byte from it.
 					//
 			        currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
 			        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
 				}
-				else if( (sr1&0x0080) != 0)		// TxE bit
+				if( (sr1&0x0080) != 0)		// TxE bit
 				{
-					//respondToSlaveReadHandler();
+			        I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
+					//RespondToSlaveRead();
 					eventEngine.Put(respondToSlaveReadHandler, eventQTooSmallFlag);
 				}
 
-				if( (sr1&0x0010) != 0)		// STOPF bit
-				{
-					slaveModeAddressAckHandler();
-					//eventEngine.Put(slaveModeAddressAckHandler, eventQTooSmallFlag);
-				}
-				
 			}
 
 
@@ -292,6 +296,9 @@ public:
 	//
 	void ErrorISR(void)
 	{
+		//
+		// TODO: Report the errors back.
+		//
 		uint32_t 	SR1Register;
 		uint32_t 	SR2Register;
 
@@ -330,12 +337,11 @@ public:
 		if(SR1Register & 0x0700) 
 		{
 			SR2Register = I2C1->SR2;//read second status register to clear ADDR if it is set (note that BTF will not be set after a NACK)
-			//I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable the RXNE/TXE interrupt - prevent the ISR tailchaining onto the ER (hopefully)
+			I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable the RXNE/TXE interrupt - prevent the ISR tailchaining onto the ER (hopefully)
 		}
 
 		I2C1->SR1 &=~0x0F00;		//reset all the error bits to clear the interrupt		
 	}
-
 
 	//
 	//
@@ -348,7 +354,7 @@ public:
         // cleared and DR filled with the data to be sent
 		//
 		I2Cx->SR1 &= (~0x0010);
-		I2Cx->CR1 &= (~0x0200);
+		//I2Cx->CR1 &= (~0x0200);
 
 		//
 		// Transaction has finished, lets put the command in the queue for the App to process.
@@ -362,18 +368,10 @@ public:
 	//
 	void RespondToSlaveRead()
 	{
-		uint16_t 		sr1						= I2Cx->SR1;
-		uint16_t 		sr2						= I2Cx->SR2;
-
 		//
 		// The transmit buffer is empty, put data into it to send to the master.					
 		//
-        I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
-
-		//
-		// Clear the BTF bit.
-		//
-		//I2Cx->SR1 	&= ~0x0004;
+        //I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
 
         //
         // Store what we've transmitted into the currentCommand payload so we can notify the host of 
@@ -381,17 +379,10 @@ public:
         //
         currentCommand.payload[currentCommand.numberOfBytes] = slaveResponseData[currentCommand.numberOfBytes];
         currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % numberOfResponseBytes;		
-
-		//
-		// Set the ACK bit.
-		//
-		I2Cx->CR1 	|= 0x400;
-		I2C_StretchClockCmd(I2Cx, DISABLE);
 	}
 
 
 private:	
-
 
 
 	/* This funcion initializes the USART1 peripheral
@@ -478,34 +469,30 @@ private:
 	//
 	//
 	//
-	bool 				queueTooSmallFlag;
-	TxQueueType& 		txQueue;
-	RxQueueType& 		rxQueue;
-	I2C_TypeDef*		I2Cx;
+	bool 			queueTooSmallFlag;
+	TxQueueType& 	txQueue;
+	RxQueueType& 	rxQueue;
+	I2C_TypeDef*	I2Cx;
 
-	I2CState 			state;
-	uint8_t				subState;
+	I2CState 		state;
+	uint8_t			subState;
 
-	uint8_t 			receivedData;
-	uint16_t			address;
-	uint8_t 			direction;
+	uint8_t 		receivedData;
+	uint16_t		address;
+	uint8_t 		direction;
 
-	uint16_t			errorFlags;
+	uint16_t		errorFlags;
 
-	I2CCommand 			currentCommand;
+	I2CCommand 		currentCommand;
 
-	uint8_t* 			slaveResponseData;
-	uint16_t			numberOfResponseBytes;
-
-	uint16_t			slaveReadStretchDuration;
+	uint8_t* 		slaveResponseData;
+	uint16_t		numberOfResponseBytes;
 
 	EventEngineType& 	eventEngine;
 	bool 				eventQTooSmallFlag;
 
-
 	MethodHandler<I2C>      respondToSlaveReadHandler;
 	MethodHandler<I2C>		slaveModeAddressAckHandler;
-
 };
 
 
