@@ -89,11 +89,17 @@ public:
 		errorFlags(0),
 		eventEngine(_eventEngine),
 		respondToSlaveReadHandler(this, &I2C::RespondToSlaveRead),
+		respondToSlaveWriteHandler(this, &I2C::RespondToSlaveWrite),
 		slaveModeAddressAckHandler(this, &I2C::slaveModeAddressAck),
+		addressMatchedHandler(this, &I2C::AddressMatched),
 		eventQTooSmallFlag(false)		
 	{
 
 		currentCommand.numberOfBytes 	= 0;
+		slaveMode				= false;
+		busBusy					= false;
+		receiveMode				= false;
+		byteTransferFinished	= false;
 
 		initialise();
 	}
@@ -175,10 +181,6 @@ public:
 		static uint8_t	counter 				= 0;
 		uint16_t 		sr1						= I2Cx->SR1;
 		uint16_t 		sr2						= I2Cx->SR2;
-		bool 			slaveMode				= false;
-		bool 			busBusy					= false;
-		bool 			receiveMode				= false;
-		bool 			byteTransferFinished	= false;
 
 		if( (sr2&0x0001) == 0)		// MSL bit.
 		{
@@ -216,52 +218,26 @@ public:
 			        // cleared and DR filled with the data to be sent
 			        // *Note: Cleared by read of SR1/2 above.
 					//
-					I2Cx->SR1 &= (~0x0002);
-
-					if(slaveMode == true)
-					{
-						currentCommand.numberOfBytes 	= 0;
-						currentCommand.target 			= I2Cx->OAR1;		// 7-bit address for now. TODO: support 10-bit.						
-					}
-
-					if(receiveMode == true)
-					{
-						//
-						// We're starting a slave-write transaction so we're
-						// about to receive data from the master.
-						//
-						currentCommand.type 			= i2cSlaveWrite;
-					}
-					else
-					{
-						//
-						// We're starting a slave-read transaction so we're
-						// about to transmit data to the master.
-						//
-						currentCommand.type 			= i2cSlaveRead;
-					}
+					eventEngine.Put(addressMatchedHandler, eventQTooSmallFlag);
 				}
 
 				if( (sr1&0x0010) != 0)		// STOPF bit
 				{
-					//slaveModeAddressAck();
-					//I2Cx->SR1 &= (~0x0010);
-					I2Cx->CR1 &= (~0x0200);
-					eventEngine.Put(slaveModeAddressAckHandler, eventQTooSmallFlag);
+					I2Cx->SR1 &= (~0x10);	// Clear the STOPF interrupt pending.
+					slaveModeAddressAckHandler();
+					//eventEngine.Put(slaveModeAddressAckHandler, eventQTooSmallFlag);
 				}
 				
 				if( (sr1&0x0040) != 0)		// RxNE bit
 				{
-					//
-					// The data buffer is full. Read the byte from it.
-					//
-			        currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
-			        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
+					eventEngine.Put(respondToSlaveWriteHandler, eventQTooSmallFlag);
 				}
 				if( (sr1&0x0080) != 0)		// TxE bit
 				{
-			        I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
-					//RespondToSlaveRead();
+					//
+					// Clear the TxE interrupt pending bit and schedule a handler for this event.
+					//
+					I2Cx->SR1 &= (~0x80);
 					eventEngine.Put(respondToSlaveReadHandler, eventQTooSmallFlag);
 				}
 
@@ -348,13 +324,14 @@ public:
 	//
 	void slaveModeAddressAck()
 	{
+		I2Cx->CR1 &= (~0x0200);
+
 		//
 		// Slave mode address acknowledged.
         // The slave stretches SCL low until ADDR is
         // cleared and DR filled with the data to be sent
 		//
-		I2Cx->SR1 &= (~0x0010);
-		//I2Cx->CR1 &= (~0x0200);
+		//I2Cx->SR1 &= (~0x0010);
 
 		//
 		// Transaction has finished, lets put the command in the queue for the App to process.
@@ -371,7 +348,7 @@ public:
 		//
 		// The transmit buffer is empty, put data into it to send to the master.					
 		//
-        //I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
+        I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
 
         //
         // Store what we've transmitted into the currentCommand payload so we can notify the host of 
@@ -381,6 +358,53 @@ public:
         currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % numberOfResponseBytes;		
 	}
 
+	//
+	//
+	//
+	void RespondToSlaveWrite()
+	{
+		
+		//
+		// The data buffer is full. Read the byte from it.
+		//
+        currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
+        currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
+		I2Cx->CR1 	|= 0x400;
+	}
+
+
+	//
+	//
+	//
+	void AddressMatched()
+	{
+		I2Cx->SR1 &= (~0x0002);
+
+		if(slaveMode == true)
+		{
+			currentCommand.numberOfBytes 	= 0;
+			currentCommand.target 			= I2Cx->OAR1;		// 7-bit address for now. TODO: support 10-bit.						
+		}
+
+		if(receiveMode == true)
+		{
+			//
+			// We're starting a slave-write transaction so we're
+			// about to receive data from the master.
+			//
+			currentCommand.type 			= i2cSlaveWrite;
+			//I2Cx->CR1 	&= ~0x400;
+		}
+		else
+		{
+			//
+			// We're starting a slave-read transaction so we're
+			// about to transmit data to the master.
+			//
+			currentCommand.type 			= i2cSlaveRead;
+		}
+
+	}
 
 private:	
 
@@ -463,6 +487,16 @@ private:
 
 		// enable I2C1
 		I2C_Cmd(I2Cx, ENABLE);
+
+		//
+		// Turn on clock stretching.
+		//
+		I2Cx->CR1 	|= 0x80;
+
+		//
+		// Set ACK generation.
+		//
+		I2Cx->CR1 	|= 0x400;
 	}
 
 
@@ -491,8 +525,15 @@ private:
 	EventEngineType& 	eventEngine;
 	bool 				eventQTooSmallFlag;
 
+	bool 			slaveMode				= false;
+	bool 			busBusy					= false;
+	bool 			receiveMode				= false;
+	bool 			byteTransferFinished	= false;
+
 	MethodHandler<I2C>      respondToSlaveReadHandler;
+	MethodHandler<I2C>      respondToSlaveWriteHandler;
 	MethodHandler<I2C>		slaveModeAddressAckHandler;
+	MethodHandler<I2C>		addressMatchedHandler;
 };
 
 
