@@ -330,7 +330,7 @@ public:
 		if(SR1Register & 0x0700) 
 		{
 			SR2Register = I2C1->SR2;//read second status register to clear ADDR if it is set (note that BTF will not be set after a NACK)
-			I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable the RXNE/TXE interrupt - prevent the ISR tailchaining onto the ER (hopefully)
+			//I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable the RXNE/TXE interrupt - prevent the ISR tailchaining onto the ER (hopefully)
 		}
 
 		I2C1->SR1 &=~0x0F00;		//reset all the error bits to clear the interrupt		

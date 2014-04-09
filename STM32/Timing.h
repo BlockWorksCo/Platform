@@ -104,7 +104,6 @@ private:
 		GPIO_InitStructure.GPIO_Speed 		= GPIO_Speed_100MHz;
 		GPIO_InitStructure.GPIO_PuPd 		= GPIO_PuPd_NOPULL;
 		GPIO_Init(GPIOD, &GPIO_InitStructure);
-
 	}
 
 	//
