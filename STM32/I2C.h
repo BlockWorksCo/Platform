@@ -223,9 +223,13 @@ public:
 
 				if( (sr1&0x0010) != 0)		// STOPF bit
 				{
-					I2Cx->SR1 &= (~0x10);	// Clear the STOPF interrupt pending.
-					slaveModeAddressAckHandler();
-					//eventEngine.Put(slaveModeAddressAckHandler, eventQTooSmallFlag);
+					//
+					// Clear the STOPF interrupt by a read from SR1 plus write to CR1 clears the STOPF interrupt pending.
+					//
+					I2Cx->SR1 &= (~0x10);
+					I2Cx->CR1 |= 0x1;
+
+					eventEngine.Put(slaveModeAddressAckHandler, eventQTooSmallFlag);
 				}
 				
 				if( (sr1&0x0040) != 0)		// RxNE bit
@@ -238,7 +242,17 @@ public:
 					// Clear the TxE interrupt pending bit and schedule a handler for this event.
 					//
 					I2Cx->SR1 &= (~0x80);
-					eventEngine.Put(respondToSlaveReadHandler, eventQTooSmallFlag);
+
+					//
+					// If BTF != 0 then the shift register is empty and we can fill DR again....
+					//
+					{
+						//
+						// Byte transfer finished...
+						//
+						eventEngine.Put(respondToSlaveReadHandler, eventQTooSmallFlag);
+						I2C_ITConfig(I2Cx, I2C_IT_EVT, DISABLE); 	// disable the I2Cx event interrupt 
+					}
 				}
 
 			}
@@ -324,7 +338,7 @@ public:
 	//
 	void slaveModeAddressAck()
 	{
-		I2Cx->CR1 &= (~0x0200);
+		//I2Cx->CR1 &= (~0x0200);
 
 		//
 		// Slave mode address acknowledged.
@@ -348,7 +362,9 @@ public:
 		//
 		// The transmit buffer is empty, put data into it to send to the master.					
 		//
+		for(volatile uint32_t t=0; t<5000; t++);
         I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
+		I2C_ITConfig(I2Cx, I2C_IT_EVT, ENABLE); 	// disable the I2Cx event interrupt 
 
         //
         // Store what we've transmitted into the currentCommand payload so we can notify the host of 
@@ -363,13 +379,13 @@ public:
 	//
 	void RespondToSlaveWrite()
 	{
+		I2Cx->CR1 	|= 0x400;
 		
 		//
 		// The data buffer is full. Read the byte from it.
 		//
         currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
         currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
-		I2Cx->CR1 	|= 0x400;
 	}
 
 
@@ -482,6 +498,7 @@ private:
 		//
 		// Enable the I2C event & error interrupts.
 		//
+		I2C_ITConfig(I2Cx, I2C_IT_BUF, DISABLE); 	// enable the I2Cx event interrupt 
 		I2C_ITConfig(I2Cx, I2C_IT_EVT, ENABLE); 	// enable the I2Cx event interrupt 
 		I2C_ITConfig(I2Cx, I2C_IT_ERR, ENABLE); 	// disable the I2Cx error interrupt 
 
@@ -491,7 +508,7 @@ private:
 		//
 		// Turn on clock stretching.
 		//
-		I2Cx->CR1 	|= 0x80;
+		I2Cx->CR1 	&= (~0x80);
 
 		//
 		// Set ACK generation.
