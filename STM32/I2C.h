@@ -90,8 +90,8 @@ public:
 		eventEngine(_eventEngine),
 		respondToSlaveReadHandler(this, &I2C::RespondToSlaveRead),
 		respondToSlaveWriteHandler(this, &I2C::RespondToSlaveWrite),
-		slaveModeAddressAckHandler(this, &I2C::slaveModeAddressAck),
 		addressMatchedHandler(this, &I2C::AddressMatched),
+		slaveModeAddressSTOPHandler(this, &I2C::slaveModeSTOP),
 		eventQTooSmallFlag(false)		
 	{
 
@@ -182,6 +182,14 @@ public:
 		uint16_t 		sr1						= I2Cx->SR1;
 		uint16_t 		sr2						= I2Cx->SR2;
 
+		//
+		// Determine the state of the common flags.
+		//
+		slaveMode				= false;
+		busBusy					= false;
+		receiveMode				= false;
+		byteTransferFinished	= false;
+
 		if( (sr2&0x0001) == 0)		// MSL bit.
 		{
 			slaveMode				= true;
@@ -229,13 +237,14 @@ public:
 					I2Cx->SR1 &= (~0x10);
 					I2Cx->CR1 |= 0x1;
 
-					eventEngine.Put(slaveModeAddressAckHandler, eventQTooSmallFlag);
+					eventEngine.Put(slaveModeAddressSTOPHandler, eventQTooSmallFlag);
 				}
 				
 				if( (sr1&0x0040) != 0)		// RxNE bit
 				{
 					eventEngine.Put(respondToSlaveWriteHandler, eventQTooSmallFlag);
 				}
+
 				if( (sr1&0x0080) != 0)		// TxE bit
 				{
 					//
@@ -333,25 +342,16 @@ public:
 		I2C1->SR1 &=~0x0F00;		//reset all the error bits to clear the interrupt		
 	}
 
+
 	//
 	//
 	//
-	void slaveModeAddressAck()
+	void slaveModeSTOP()
 	{
-		//I2Cx->CR1 &= (~0x0200);
-
-		//
-		// Slave mode address acknowledged.
-        // The slave stretches SCL low until ADDR is
-        // cleared and DR filled with the data to be sent
-		//
-		//I2Cx->SR1 &= (~0x0010);
-
 		//
 		// Transaction has finished, lets put the command in the queue for the App to process.
 		//
 		rxQueue.Put(currentCommand, queueTooSmallFlag);
-
 	}
 
 	//
@@ -408,7 +408,6 @@ public:
 			// about to receive data from the master.
 			//
 			currentCommand.type 			= i2cSlaveWrite;
-			//I2Cx->CR1 	&= ~0x400;
 		}
 		else
 		{
@@ -541,14 +540,14 @@ private:
 	EventEngineType& 	eventEngine;
 	bool 				eventQTooSmallFlag;
 
-	bool 			slaveMode				= false;
-	bool 			busBusy					= false;
-	bool 			receiveMode				= false;
-	bool 			byteTransferFinished	= false;
+	bool 			slaveMode;
+	bool 			busBusy;
+	bool 			receiveMode;
+	bool 			byteTransferFinished;
 
 	MethodHandler<I2C>      respondToSlaveReadHandler;
 	MethodHandler<I2C>      respondToSlaveWriteHandler;
-	MethodHandler<I2C>		slaveModeAddressAckHandler;
+	MethodHandler<I2C>		slaveModeAddressSTOPHandler;
 	MethodHandler<I2C>		addressMatchedHandler;
 };
 
