@@ -12,7 +12,7 @@
 #include <misc.h>
 #include <stm32f4xx_i2c.h>
 #include "Events.h"
-
+#include "Debug.h"
 
 
 //
@@ -91,7 +91,7 @@ public:
 		respondToSlaveReadHandler(this, &I2C::RespondToSlaveRead),
 		respondToSlaveWriteHandler(this, &I2C::RespondToSlaveWrite),
 		addressMatchedHandler(this, &I2C::AddressMatched),
-		slaveModeAddressSTOPHandler(this, &I2C::slaveModeSTOP),
+		slaveModeSTOPHandler(this, &I2C::slaveModeSTOP),
 		eventQTooSmallFlag(false)		
 	{
 
@@ -211,7 +211,7 @@ public:
 		}
 
 		//
-		//
+		// NOTE: Ordering of event handlers & regeister accesses *IS* important here.
 		//
 		switch(state)
 		{
@@ -229,6 +229,11 @@ public:
 					eventEngine.Put(addressMatchedHandler, eventQTooSmallFlag);
 				}
 
+				if( (sr1&0x0040) != 0)		// RxNE bit
+				{
+					eventEngine.Put(respondToSlaveWriteHandler, eventQTooSmallFlag);
+				}
+
 				if( (sr1&0x0010) != 0)		// STOPF bit
 				{
 					//
@@ -237,14 +242,9 @@ public:
 					I2Cx->SR1 &= (~0x10);
 					I2Cx->CR1 |= 0x1;
 
-					eventEngine.Put(slaveModeAddressSTOPHandler, eventQTooSmallFlag);
+					eventEngine.Put(slaveModeSTOPHandler, eventQTooSmallFlag);
 				}
 				
-				if( (sr1&0x0040) != 0)		// RxNE bit
-				{
-					eventEngine.Put(respondToSlaveWriteHandler, eventQTooSmallFlag);
-				}
-
 				if( (sr1&0x0080) != 0)		// TxE bit
 				{
 					//
@@ -351,7 +351,9 @@ public:
 		//
 		// Transaction has finished, lets put the command in the queue for the App to process.
 		//
+	    SetDebugPin();
 		rxQueue.Put(currentCommand, queueTooSmallFlag);
+	    ClearDebugPin();
 	}
 
 	//
@@ -383,8 +385,12 @@ public:
 		//
 		// The data buffer is full. Read the byte from it.
 		//
+	    SetDebugPin2();
+
         currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
         currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
+
+	    ClearDebugPin2();
 	}
 
 
@@ -417,7 +423,6 @@ public:
 			//
 			currentCommand.type 			= i2cSlaveRead;
 		}
-
 	}
 
 private:	
@@ -547,7 +552,7 @@ private:
 
 	MethodHandler<I2C>      respondToSlaveReadHandler;
 	MethodHandler<I2C>      respondToSlaveWriteHandler;
-	MethodHandler<I2C>		slaveModeAddressSTOPHandler;
+	MethodHandler<I2C>		slaveModeSTOPHandler;
 	MethodHandler<I2C>		addressMatchedHandler;
 };
 
