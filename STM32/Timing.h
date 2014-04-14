@@ -53,10 +53,11 @@ public:
 	    }
 	}
 
+
 	//
 	// Return the current millisecond tick counter value.
 	//
-	TimestampType GetTick()
+	TimestampType GetMicrosecondTick()
 	{
 		return microsecondCounter;
 	}

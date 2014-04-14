@@ -250,7 +250,7 @@ public:
 						//
 						// Byte transfer finished...
 						//
-						eventEngine.Put(respondToSlaveReadHandler, eventQTooSmallFlag);
+						eventEngine.PutAfter(200, respondToSlaveReadHandler, eventQTooSmallFlag);
 						I2C_ITConfig(I2Cx, I2C_IT_EVT, DISABLE); 	// disable the I2Cx event interrupt 
 					}
 				}
@@ -362,7 +362,6 @@ public:
 		//
 		// The transmit buffer is empty, put data into it to send to the master.					
 		//
-		for(volatile uint32_t t=0; t<5000; t++);
         I2Cx->DR 	= slaveResponseData[currentCommand.numberOfBytes];
 		I2C_ITConfig(I2Cx, I2C_IT_EVT, ENABLE); 	// disable the I2Cx event interrupt 
 
