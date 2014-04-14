@@ -101,18 +101,25 @@ public:
     {
         elementDroppedFlag  = true;
 
-        for(uint16_t i=0; i<maxTimedEvents; i++)
+        if(numberOfTicks > 0)
         {
-            if(timedEvents[i].usedFlag == false)
+            for(uint16_t i=0; i<maxTimedEvents; i++)
             {
-                timedEvents[i].usedFlag                 = true;
-                timedEvents[i].handler                  = &handler;
-                timedEvents[i].reloadValue              = (uint32_t)-1;
-                timedEvents[i].firingTimestamp          = timing.GetMicrosecondTick() + numberOfTicks;
+                if(timedEvents[i].usedFlag == false)
+                {
+                    timedEvents[i].usedFlag                 = true;
+                    timedEvents[i].handler                  = &handler;
+                    timedEvents[i].reloadValue              = (uint32_t)-1;
+                    timedEvents[i].firingTimestamp          = timing.GetMicrosecondTick() + numberOfTicks;
 
-                elementDroppedFlag  = false;
-                break;
+                    elementDroppedFlag  = false;
+                    break;
+                }
             }
+        }
+        else
+        {
+            Put(handler, elementDroppedFlag);
         }
     }
 
@@ -124,18 +131,25 @@ public:
     {
         elementDroppedFlag  = true;
 
-        for(uint16_t i=0; i<maxTimedEvents; i++)
+        if(numberOfTicks > 0)
         {
-            if(timedEvents[i].usedFlag == false)
+            for(uint16_t i=0; i<maxTimedEvents; i++)
             {
-                timedEvents[i].usedFlag                 = true;
-                timedEvents[i].handler                  = &handler;
-                timedEvents[i].reloadValue              = numberOfTicks;
-                timedEvents[i].firingTimestamp          = timing.GetMicrosecondTick() + numberOfTicks;
+                if(timedEvents[i].usedFlag == false)
+                {
+                    timedEvents[i].usedFlag                 = true;
+                    timedEvents[i].handler                  = &handler;
+                    timedEvents[i].reloadValue              = numberOfTicks;
+                    timedEvents[i].firingTimestamp          = timing.GetMicrosecondTick() + numberOfTicks;
 
-                elementDroppedFlag  = false;
-                break;
+                    elementDroppedFlag  = false;
+                    break;
+                }
             }
+        }
+        else
+        {
+            Put(handler, elementDroppedFlag);
         }
     }
 

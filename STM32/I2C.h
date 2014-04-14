@@ -92,6 +92,7 @@ public:
 		respondToSlaveWriteHandler(this, &I2C::RespondToSlaveWrite),
 		addressMatchedHandler(this, &I2C::AddressMatched),
 		slaveModeSTOPHandler(this, &I2C::slaveModeSTOP),
+		slaveReadDelay(0),
 		eventQTooSmallFlag(false)		
 	{
 
@@ -112,6 +113,16 @@ public:
 	{
 		slaveResponseData 		= response;
 		numberOfResponseBytes	= _numberOfResponseBytes;
+	}
+
+	//
+	//
+	//
+	void SetSlaveReadDelay(uint32_t numberOfMicroseconds)
+	{
+	    SetDebugPin2();
+		slaveReadDelay 	= numberOfMicroseconds;
+	    ClearDebugPin2();
 	}
 
 	//
@@ -254,14 +265,10 @@ public:
 
 					//
 					// If BTF != 0 then the shift register is empty and we can fill DR again....
+					// Byte transfer finished...
 					//
-					{
-						//
-						// Byte transfer finished...
-						//
-						eventEngine.PutAfter(200, respondToSlaveReadHandler, eventQTooSmallFlag);
-						I2C_ITConfig(I2Cx, I2C_IT_EVT, DISABLE); 	// disable the I2Cx event interrupt 
-					}
+					eventEngine.PutAfter(slaveReadDelay, respondToSlaveReadHandler, eventQTooSmallFlag);
+					I2C_ITConfig(I2Cx, I2C_IT_EVT, DISABLE); 	// disable the I2Cx event interrupt 
 				}
 
 			}
@@ -269,7 +276,7 @@ public:
 
 			default:
 			{
-				//while(1);
+				//STOP;
 				break;
 			}
 		}
@@ -351,9 +358,7 @@ public:
 		//
 		// Transaction has finished, lets put the command in the queue for the App to process.
 		//
-	    SetDebugPin();
 		rxQueue.Put(currentCommand, queueTooSmallFlag);
-	    ClearDebugPin();
 	}
 
 	//
@@ -385,12 +390,8 @@ public:
 		//
 		// The data buffer is full. Read the byte from it.
 		//
-	    SetDebugPin2();
-
         currentCommand.payload[currentCommand.numberOfBytes] = I2Cx->DR;
         currentCommand.numberOfBytes 	= (currentCommand.numberOfBytes + 1) % maxPayloadSize;
-
-	    ClearDebugPin2();
 	}
 
 
@@ -554,6 +555,8 @@ private:
 	MethodHandler<I2C>      respondToSlaveWriteHandler;
 	MethodHandler<I2C>		slaveModeSTOPHandler;
 	MethodHandler<I2C>		addressMatchedHandler;
+
+	uint32_t 				slaveReadDelay;
 };
 
 

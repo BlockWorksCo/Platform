@@ -7,6 +7,8 @@
 
 
 
+#define STOP			{while(true);}
+
 #define DEBUG_TEXT(msg)      
 
 
