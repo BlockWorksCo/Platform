@@ -120,9 +120,9 @@ public:
 	//
 	void SetSlaveReadDelay(uint32_t numberOfMicroseconds)
 	{
-	    SetDebugPin2();
+	    //SetDebugPin2();
 		slaveReadDelay 	= numberOfMicroseconds;
-	    ClearDebugPin2();
+	    //ClearDebugPin2();
 	}
 
 	//
