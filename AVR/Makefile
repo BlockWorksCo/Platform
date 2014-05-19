@@ -3,7 +3,7 @@
 CC=avr-g++
 LD=avr-g++
 
-CFLAGS=-O2 -Wall -g -nostdlib -D__AVR_ATmega328P__
+CFLAGS=-O2 -Wall -g -nostdlib -D__AVR_ATmega328P__ -DF_CPU=8000000L
 LDFLAGS=-g  -L./ -Wl,-Map=Output/Main.map -nostdlib
 
 ARDUINO_BASE=/usr/share/arduino
@@ -21,6 +21,10 @@ VPATH+=$(ARDUINO_BASE)/libraries/SPI
 VPATH+=$(ARDUINO_BASE)/hardware/arduino/cores/arduino
 
 LIBS+=
+
+
+OBJS+=SPI.o
+OBJS+=wiring_digital.o
 
 
 
