@@ -7,8 +7,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <msp430.h>
-#include <legacymsp430.h>
+
+
 
 //
 // Platform Name.

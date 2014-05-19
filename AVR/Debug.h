@@ -1,8 +1,8 @@
 
 
 
-#ifndef __MSP430DEBUG_H__
-#define __MSP430DEBUG_H__
+#ifndef __AVRDEBUG_H__
+#define __AVRDEBUG_H__
 
 
 

@@ -1,8 +1,8 @@
 
 
 
-#ifndef __MSP430GPIO_H__
-#define __MSP430GPIO_H__
+#ifndef __AVRGPIO_H__
+#define __AVRGPIO_H__
 
 
 
@@ -15,11 +15,11 @@
 //
 //
 template <uint16_t portData, uint16_t portDirection, uint8_t mask>
-class MSP430Output 
+class AVROutput 
 {
 public:
 
-    MSP430Output()
+    AVROutput()
     {
 	    *((volatile uint8_t*)portDirection)  |= mask; 		// P1.0 and P1.6 are the red+green LEDs	
     }
@@ -56,11 +56,11 @@ template <  uint16_t portData,
             uint16_t portDirection, 
             uint16_t mask,  
             typename valueChangeDelegateType>
-class MSP430Input 
+class AVRInput 
 {
 public:
 
-    MSP430Input(valueChangeDelegateType&  _valueChangeDelegate) :
+    AVRInput(valueChangeDelegateType&  _valueChangeDelegate) :
             valueChangeDelegate(_valueChangeDelegate)
     {
         *((volatile uint8_t*)portDirection)  &= ~mask; 

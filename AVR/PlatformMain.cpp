@@ -5,8 +5,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include <msp430.h>
-#include <legacymsp430.h>
 
 
 
@@ -31,15 +29,12 @@ void do_ctors()
 //
 int main()
 {
-    WDTCTL  = WDTPW + WDTHOLD; 	// Stop WDT
-
     do_ctors();
 
 	//BCSCTL1 = CALBC1_1MHZ;      // Set DCO
   	//DCOCTL  = CALDCO_1MHZ;
  
     //printf("PlatformMain started.\n");
-  	P1DIR |= 0x01;
 
 #if 0
 	P1OUT |= 0x01;
