@@ -31,6 +31,9 @@ int main()
 {
     do_ctors();
 
+    init();
+
+
 	//BCSCTL1 = CALBC1_1MHZ;      // Set DCO
   	//DCOCTL  = CALDCO_1MHZ;
  
