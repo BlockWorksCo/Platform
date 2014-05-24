@@ -27,7 +27,7 @@ void do_ctors()
 //
 //
 //
-int xxmain()
+int main()
 {
     do_ctors();
 
