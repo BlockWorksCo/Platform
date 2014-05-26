@@ -29,7 +29,7 @@ void do_ctors()
 //
 int main()
 {
-    do_ctors();
+    //do_ctors();
 
     init();
 
