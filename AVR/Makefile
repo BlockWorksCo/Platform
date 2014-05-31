@@ -5,7 +5,7 @@ LD=avr-g++
 OBJCOPY=avr-objcopy
 
 
-CFLAGS=-O2 -Wall -g -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -MMD -DUSB_VID=null -DUSB_PID=null -DARDUINO=105
+CFLAGS=-O2 -Wall -g -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -MMD -DUSB_VID=null -DUSB_PID=null -DARDUINO=105 
 LDFLAGS=-g  -L./ -Wl,-Map=Output/Main.map,--gc-sections  -mmcu=atmega328p 
 
 ARDUINO_BASE=/usr/share/arduino
