@@ -22,6 +22,14 @@ public:
 	//
 	Queue()
 	{
+		Drain();
+	}
+
+	//
+	//
+	//
+	void Drain()
+	{		
 		head					= 0;
 		tail 					= 0;
 		numberOfElementsInQueue	= 0;
@@ -99,8 +107,6 @@ public:
 		{
 			returnValue			= elements[tail];
 			dataAvailableFlag	= true;		
-
-			numberOfElementsInQueue--;
 		}
 
 		return returnValue;
@@ -115,7 +121,7 @@ public:
 		return numberOfElementsInQueue;
 	}
 
-private:	
+//private:	
 
 	//
 	//

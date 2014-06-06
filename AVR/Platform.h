@@ -17,6 +17,8 @@
 //#define MSP430
 
 
+void Flash();
+void Init();
 
 
 //
@@ -37,6 +39,10 @@ extern "C" void AppMain();
 //
 // Necessary functions & variables to make the macros work.
 //
+
+
+
+void DebugOut(uint8_t ch);
 
 
 #endif
