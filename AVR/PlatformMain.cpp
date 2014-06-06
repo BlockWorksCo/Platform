@@ -33,23 +33,6 @@ void Init()
 
 
 
-typedef void(*ctor_t)(); 
-   extern ctor_t __ctors_start; 
-   extern ctor_t __ctors_end; 
- 
-
-void do_ctors()
-{
-   ctor_t ctor = __ctors_start; 
-   while( ctor < __ctors_end ) 
-   { 
-     ctor(); 
-     ctor = (ctor_t)((void*)ctor + sizeof(void*)); 
-   } 
-}
-
-
-
 
 //
 //
@@ -57,7 +40,6 @@ void do_ctors()
 int main()
 {
 	init();
-	do_ctors();
 
     //
     // Start the application.
