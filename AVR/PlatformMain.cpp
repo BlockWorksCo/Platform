@@ -7,7 +7,7 @@
 
 
 
-
+#if 0
 
 void Flash()
 {
@@ -31,7 +31,7 @@ void Init()
 }
 
 
-
+#endif
 
 
 //

@@ -20,19 +20,11 @@ public:
 	//
 	// Initialise the queue.
 	//
-	Queue()
+	Queue() :
+		head(0),
+		tail(0)
 	{
-		Drain();
-	}
-
-	//
-	//
-	//
-	void Drain()
-	{		
-		head					= 0;
-		tail 					= 0;
-		numberOfElementsInQueue	= 0;
+		memset(&elements[0], '_', sizeof(elements) );
 	}
 
 	//
@@ -53,24 +45,19 @@ public:
 	//
 	void Put(ElementType element, bool& elementDroppedFlag)
 	{
-		IndexType 	nextHead	= (head+1) % NumberOfElements;
-
-		elementDroppedFlag	= false;		
-
-		if( nextHead != tail)
-		{
-			elements[head] 	= element;
-			head 			= nextHead;
-
-			numberOfElementsInQueue++;			
-		}
-		else
-		{
-			//
-			// Queue has filled up and become lossy.
-			//
-			elementDroppedFlag	= true;
-		}
+	    IndexType next_head = (head + 1) % NumberOfElements;
+	    if (next_head != tail) 
+	    {
+	        /* there is room */
+	        elements[head] = element;
+	        head = next_head;
+	        elementDroppedFlag 	= false;
+	    } 
+	    else 
+	    {
+	        /* no room left in the buffer */
+	        elementDroppedFlag 	= true;
+	    }
 	}
 
 	//
@@ -78,20 +65,19 @@ public:
 	//
 	ElementType Get(bool& dataAvailableFlag)
 	{
-		ElementType returnValue		= elements[tail];
+		ElementType 	c = 0;
 
-		dataAvailableFlag		= false;	
-
-		if(IsEmpty() == false)
-		{
-			returnValue			= elements[tail];
-			tail 				= (tail + 1) % NumberOfElements;	
-			dataAvailableFlag	= true;		
-
-			numberOfElementsInQueue--;
-		}
-
-		return returnValue;
+	    if (head != tail) 
+	    {
+	        c = elements[tail];
+	        tail = (tail + 1) % NumberOfElements;
+	        dataAvailableFlag 	= true;
+	    } 
+	    else 
+	    {
+	    	dataAvailableFlag	= false;
+	    }
+        return c;
 	}
 
 	//
@@ -113,15 +99,7 @@ public:
 	}
 
 
-	//
-	//
-	//
-	IndexType NumberOfElementsInQueue()
-	{
-		return numberOfElementsInQueue;
-	}
-
-//private:	
+private:	
 
 	//
 	//
@@ -129,7 +107,6 @@ public:
 	ElementType		elements[NumberOfElements];
 	IndexType		head;
 	IndexType		tail;
-	IndexType		numberOfElementsInQueue;
 
 };
 
