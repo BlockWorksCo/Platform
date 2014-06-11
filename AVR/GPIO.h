@@ -14,35 +14,49 @@
 //
 //
 //
-template <uint16_t portData, uint16_t portDirection, uint8_t mask>
+template <uint16_t port>
 class AVROutput 
 {
 public:
 
     AVROutput()
     {
-	    *((volatile uint8_t*)portDirection)  |= mask; 		// P1.0 and P1.6 are the red+green LEDs	
+        pinMode(port, OUTPUT);
     }
 
     
     void Toggle()
     {
-	   *((volatile uint8_t*)portData)    ^= mask; 			// Toggle P1.6 output (green LED) using exclusive-OR
     }
     
     void Set()
     {
-	    *((volatile uint8_t*)portData)  &= mask; 		// All LEDs off
+        uint8_t             bitNum  = digitalPinToBitMask(port);
+        uint8_t             portNum = digitalPinToPort(port);
+        volatile uint8_t*   out     = portOutputRegister(portNum);
+
+        *out |= bitNum;
     }
     
     void Set(uint16_t value)
     {
-	    *((volatile uint8_t*)portData)  = ((*((volatile uint8_t*)portData)) & (~mask)) | value; 		// All LEDs off
+        if(value == 0)
+        {
+            Clear();
+        }
+        else
+        {
+            Set();
+        }
     }
     
     void Clear()
     {
-	    *((volatile uint8_t*)portData)  &= ~mask; 		// All LEDs off
+        uint8_t             bitNum  = digitalPinToBitMask(port);
+        uint8_t             portNum = digitalPinToPort(port);
+        volatile uint8_t*   out     = portOutputRegister(portNum);
+
+        *out &= ~bitNum;
     }
     
 };
@@ -53,8 +67,6 @@ public:
 //
 //
 template <  uint16_t portData,
-            uint16_t portDirection, 
-            uint16_t mask,  
             typename valueChangeDelegateType>
 class AVRInput 
 {
@@ -63,12 +75,13 @@ public:
     AVRInput(valueChangeDelegateType&  _valueChangeDelegate) :
             valueChangeDelegate(_valueChangeDelegate)
     {
-        *((volatile uint8_t*)portDirection)  &= ~mask; 
+        //*((volatile uint8_t*)portDirection)  &= ~mask; 
     }
     
     uint8_t Get()
     {
-        return (*((volatile uint8_t*)portData))&mask;
+        //return (*((volatile uint8_t*)portData))&mask;
+        return 0;
     }
 
     void Poll()
