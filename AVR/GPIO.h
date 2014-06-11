@@ -22,6 +22,10 @@ public:
     AVROutput()
     {
         pinMode(port, OUTPUT);
+
+        bitNum  = digitalPinToBitMask(port);
+        portNum = digitalPinToPort(port);
+        out     = portOutputRegister(portNum);
     }
 
     
@@ -31,11 +35,7 @@ public:
     
     void Set()
     {
-        uint8_t             bitNum  = digitalPinToBitMask(port);
-        uint8_t             portNum = digitalPinToPort(port);
-        volatile uint8_t*   out     = portOutputRegister(portNum);
-
-        *out |= bitNum;
+        *out |= (bitNum);
     }
     
     void Set(uint16_t value)
@@ -52,13 +52,14 @@ public:
     
     void Clear()
     {
-        uint8_t             bitNum  = digitalPinToBitMask(port);
-        uint8_t             portNum = digitalPinToPort(port);
-        volatile uint8_t*   out     = portOutputRegister(portNum);
-
         *out &= ~bitNum;
     }
-    
+
+private:
+
+    uint8_t             bitNum;
+    uint8_t             portNum;
+    volatile uint8_t*   out;;    
 };
 
 
