@@ -19,7 +19,9 @@
 
 
 
-template <uint32_t PortBase>
+template <  uint32_t PortBase,
+            typename TxQueueType, 
+            typename RxQueueType>
 class SPI
 {
 
@@ -28,15 +30,18 @@ public:
     //
     //
     //
-    SPI() :
-        SPIx((SPI_TypeDef*)PortBase)
+    SPI(TxQueueType& _txQueue, RxQueueType& _rxQueue) :
+        SPIx((SPI_TypeDef*)PortBase),
+        txQueue(_txQueue),
+        rxQueue(_rxQueue),
+        queueTooSmallFlag(false)
     {
         initialise();
     }
 
 
     //
-    // As master, clock a byte out of MOSI.
+    // As master, clock a byte out of MOSI to the slave.
     //
     void Put(uint8_t data)
     {         
@@ -48,7 +53,7 @@ public:
 
 
     //
-    // As a master, clock a byte into MISO.
+    // As a master, clock a byte into MISO from the slave.
     //
     uint8_t Get()
     {         
@@ -65,23 +70,37 @@ public:
     //
     void ISR()
     {
+        //
+        // Tx buffer empty.
+        //
         if (SPI_I2S_GetITStatus(SPIx, SPI_I2S_IT_TXE) == SET)
         {
-            static uint16_t     count   = 0;
+            bool        dataAvailableFlag   = false;        
+            uint8_t     data                = txQueue.Get(dataAvailableFlag);
 
-            SPIx->DR  = count;
-            count++;
-            //SPI_Cmd(SPIx, DISABLE);
-
+            if(dataAvailableFlag == true)
+            {
+                //
+                // Transmit the data out of the SPI bus.
+                //
+                SPIx->DR  = data;
+            }
+            else
+            {
+                //
+                // Stop the SPI, no more data.
+                //
+                SPI_Cmd(SPIx, DISABLE);
+            }
         }
 
+        //
+        // Rx buffer Not Empty.
+        //
         if (SPI_I2S_GetITStatus(SPIx, SPI_I2S_IT_RXNE) == SET)
         {
-            static uint16_t     i       = 0 ;
-
-            buffer[i] = SPIx->DR ;
-            i   = (i+1) % sizeof(buffer);
-
+            uint8_t     receivedData    = SPIx->DR;
+            rxQueue.Put(receivedData, queueTooSmallFlag);         
         }
     }
 
@@ -137,12 +156,21 @@ private:
         SPI_InitStruct.SPI_FirstBit             = SPI_FirstBit_MSB;                 // data is transmitted MSB first
         SPI_Init(SPIx, &SPI_InitStruct);
 
-        SPI_Cmd(SPIx, ENABLE); // enable SPI3    
+        //
+        // Enable the SPI interrupts.
+        //
+        SPI_ITConfig(SPIx, SPI_I2S_IT_TXE,  ENABLE);    // enable the SPIx TxE interrupt 
+        SPI_ITConfig(SPIx, SPI_I2S_IT_RXNE, ENABLE);    // enable the SPIx RxNE interrupt 
+        SPI_ITConfig(SPIx, SPI_I2S_IT_ERR,  ENABLE);    // enable the SPIx Error interrupt 
+
+        SPI_Cmd(SPIx, ENABLE); // enable SPIx
     }
 
 
+    bool            queueTooSmallFlag;
+    TxQueueType&    txQueue;
+    RxQueueType&    rxQueue;
     SPI_TypeDef*    SPIx;
-    uint8_t         buffer[10];
 
 };
 
