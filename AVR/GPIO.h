@@ -15,7 +15,7 @@
 //
 //
 template <uint16_t port>
-class AVROutput 
+class AVROutput
 {
 public:
 
