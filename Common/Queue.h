@@ -24,7 +24,7 @@ public:
 		head(0),
 		tail(0)
 	{
-		memset(&elements[0], '_', sizeof(elements) );
+		//memset(&elements[0], '_', sizeof(elements) );
 	}
 
 	//
@@ -65,7 +65,7 @@ public:
 	//
 	ElementType Get(bool& dataAvailableFlag)
 	{
-		ElementType 	c = 0;
+		ElementType 	c;
 
 	    if (head != tail) 
 	    {
@@ -77,6 +77,7 @@ public:
 	    {
 	    	dataAvailableFlag	= false;
 	    }
+	    
         return c;
 	}
 
