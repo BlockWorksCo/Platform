@@ -37,7 +37,7 @@ void Init()
 //
 //
 //
-int main()
+int main() //
 {
 	init();
 

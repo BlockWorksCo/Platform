@@ -14,30 +14,29 @@
 //
 //
 //
-template <uint16_t port>
+template <uint8_t portAddress, uint16_t bitNumber>
 class AVROutput
 {
 public:
 
     AVROutput()
     {
-        pinMode(port, OUTPUT);
-
-        bitNum  = digitalPinToBitMask(port);
-        portNum = digitalPinToPort(port); //
-        out     = portOutputRegister(portNum);
+        pinMode(bitNumber, OUTPUT);
     }
 
-    
-    void Toggle()
-    {
-    }
     
     void Set()
     {
-        *out |= (bitNum);
+        *((volatile uint8_t*)(portAddress+0x20)) |= (1<<bitNumber);
     }
     
+
+    void Clear()
+    {
+        *((volatile uint8_t*)(portAddress+0x20)) &= ~(1<<bitNumber);
+    }
+
+
     void Set(uint16_t value)
     {
         if(value == 0)
@@ -50,16 +49,6 @@ public:
         }
     }
     
-    void Clear()
-    {
-        *out &= ~bitNum;
-    }
-
-private:
-
-    uint8_t             bitNum;
-    uint8_t             portNum;
-    volatile uint8_t*   out;;    
 };
 
 
