@@ -14,14 +14,14 @@
 //
 //
 //
-template <uint8_t portAddress, uint16_t bitNumber>
+template <uint8_t portAddress, uint8_t ddrAddress, uint16_t bitNumber>
 class AVROutput
 {
 public:
 
     AVROutput()
     {
-        pinMode(bitNumber, OUTPUT);
+        *((volatile uint8_t*)(ddrAddress+0x20)) |= (1<<bitNumber);
     }
 
     
