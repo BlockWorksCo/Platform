@@ -24,7 +24,7 @@ public:
         pinMode(port, OUTPUT);
 
         bitNum  = digitalPinToBitMask(port);
-        portNum = digitalPinToPort(port);
+        portNum = digitalPinToPort(port); //
         out     = portOutputRegister(portNum);
     }
 
