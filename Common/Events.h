@@ -46,7 +46,7 @@ template <typename T>
 class MethodHandler : public Handler
 {
 public:
-    MethodHandler(T* _pObject, void (T::*_pMethod)()) :
+    MethodHandler(T& _pObject, void (T::*_pMethod)()) :
             pObject(_pObject),
             pMethod(_pMethod)
     {
@@ -54,10 +54,11 @@ public:
 
     void operator()()
     {
-        (*pObject.*pMethod)();
+        T* pT = &pObject;
+        (*pT.*pMethod)();
     }    
 
-    T*  pObject;
+    T&  pObject;
     void (T::*pMethod)();
 };
 
