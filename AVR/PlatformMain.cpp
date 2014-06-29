@@ -7,6 +7,8 @@
 
 
 
+uint32_t panicCode 	= 0;
+
 #if 0
 
 void Flash()

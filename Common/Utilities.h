@@ -12,7 +12,9 @@
 
 #define DEBUGME                         while(true)
 
+#define PANIC(code)						panicCode = code;
 
+extern uint32_t 	panicCode;
 
 #endif
 
