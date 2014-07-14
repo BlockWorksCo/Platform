@@ -27,7 +27,7 @@ public:
     //
     // Initialise the queue.
     //
-    UART(char* portName, TxQueueType& _txQueue, RxQueueType& _rxQueue) :
+    UART(char* portName, RxQueueType& _rxQueue, TxQueueType& _txQueue) :
         txQueue(_txQueue),
         rxQueue(_rxQueue),
         queueTooSmallFlag(false)
@@ -70,35 +70,16 @@ public:
     //
     bool ProcessQueue()
     {
-        if(txQueue.IsEmpty() == false)
+        bool        dataAvailableFlag   = false;
+        uint8_t     data    = txQueue.Get(dataAvailableFlag);
+
+        if(dataAvailableFlag == true)
         {
-            char            buffer[10];
-            int             bytes;
-            char            c;
-            int             x;
-            char*           bufptr;
-            
             //
             // Let the ISR empty the queue.
             //
-            write(fd, "ATZ\r",4);
-            printf(" wrote\n");
-            bufptr = buffer;
-
-            fcntl(fd, F_SETFL, FNDELAY);
-            bytes = read(fd, bufptr, sizeof(buffer));
-            printf("number of bytes read is %d\n", bytes);
-            perror ("read error:");
-
-            for (x = 0; x < 10 ; x++)
-            {
-                c = buffer[x];
-                printf("%d  ",c);
-            }
-            close(fd);
-
-            //puts(buffer[0]);
-            printf("\nshould of put something out \n");
+            write(fd, &data,1);
+            printf("%c",data);
 
             return true;
         }
@@ -115,6 +96,23 @@ public:
         // Rx buffer not empty.
         //if( USART_GetITStatus(usart, USART_IT_RXNE) )
         {
+            char            buffer[10];
+            int             bytes;
+            char            c;
+            int             x;
+            char*           bufptr;
+            
+            fcntl(fd, F_SETFL, FNDELAY);
+            bytes = read(fd, bufptr, sizeof(buffer));
+            printf("number of bytes read is %d\n", bytes);
+            perror ("read error:");
+
+            for (x = 0; x < 10 ; x++)
+            {
+                c = buffer[x];
+                printf("%d  ",c);
+            }
+            close(fd);
 
             //
             // Data waiting in the UART Rx buffer, get it and put it in the queue
