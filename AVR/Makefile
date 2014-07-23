@@ -27,6 +27,8 @@ LIBS+=
 
 OBJS+=SPI.o
 OBJS+=wiring_digital.o
+OBJS+=wiring.o
+
 
 
 
