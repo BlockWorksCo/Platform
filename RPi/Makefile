@@ -1,7 +1,7 @@
 
 
-CC=arm-bcm2708-linux-gnueabi-g++
-LD=arm-bcm2708-linux-gnueabi-g++
+CC=arm-linux-gnueabihf-g++
+LD=arm-linux-gnueabihf-g++
 RM=rm
 CFLAGS=-O2 -save-temps -Wall -g 
 
