@@ -35,3 +35,9 @@ Main: $(OBJS)
 
 
 
+.c.o:
+	-@mkdir Output
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o Output/$@
+
+
+
