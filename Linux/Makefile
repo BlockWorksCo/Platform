@@ -3,7 +3,7 @@
 CC=g++
 LD=g++
 RM=rm
-CFLAGS=-O2 -save-temps -Wall -g 
+CFLAGS=-O3 -save-temps -Wall -g 
 
 
 INCLUDES+=-I./
