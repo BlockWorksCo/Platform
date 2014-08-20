@@ -3,7 +3,7 @@
 CC=i586-mingw32msvc-g++
 LD=i586-mingw32msvc-g++
 RM=rm
-CFLAGS=-O2 -save-temps -Wall -g -mwindows
+CFLAGS=-O3 -save-temps -Wall -g -mwindows
 
 
 INCLUDES+=-I./

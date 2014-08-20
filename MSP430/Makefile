@@ -3,7 +3,7 @@
 CC=msp430-g++
 LD=msp430-g++
 
-CFLAGS=-mmcu=msp430g2553 -O2 -Wall -g -nostdlib
+CFLAGS=-mmcu=msp430g2553 -O3 -std=c++0x  -Wall -g -nostdlib
 LDFLAGS=-mmcu=msp430g2553 -g  -L./ -Wl,-Map=Output/Main.map -nostdlib
 
 

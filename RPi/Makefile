@@ -3,7 +3,7 @@
 CC=arm-linux-gnueabihf-g++
 LD=arm-linux-gnueabihf-g++
 RM=rm
-CFLAGS=-O2 -save-temps -Wall -g 
+CFLAGS=-O3 -std=c++11  -save-temps -Wall -g 
 
 
 INCLUDES+=-I./
