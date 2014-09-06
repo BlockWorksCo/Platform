@@ -16,14 +16,14 @@ public:
 	//
 	// Simple text output.
 	//
-	void puts(const char* text)
+	static void puts(const char* text)
 	{
 	}
 
 	//
 	//
 	//
-	void printf(char* format, ...)
+	static void printf(const char* format, ...)
 	{
 	}
 
