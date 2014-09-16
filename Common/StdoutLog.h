@@ -20,6 +20,7 @@ public:
 	static void puts(const char* text)
 	{
 		::printf("%s\n",text);
+		fflush(stdout);
 	}
 
 	//

@@ -12,9 +12,9 @@
 
 #define DEBUGME                         while(true)
 
-#define PANIC(code)						panicCode = code;
+#define PANIC(code)						{panicCode = code;while(true);}
 
-extern uint32_t 	panicCode;
+extern volatile uint32_t 	panicCode;
 
 
 
