@@ -1,7 +1,7 @@
 
 
-CC=g++
-LD=g++
+CC=g++-4.8
+LD=g++-4.8
 RM=rm
 CFLAGS=-O3 -save-temps -Wall -g -std=c++11  
 
