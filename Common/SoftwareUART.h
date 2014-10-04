@@ -14,7 +14,9 @@ class SoftwareUART
 {
 public:
 
-	SoftwareUART()
+	SoftwareUART( RxPinType& _rxPin, TxPinType& _txPin ) :
+		rxPin(_rxPin),
+		txPin(_txPin)
 	{
 		
 	}
@@ -25,7 +27,8 @@ public:
 	//
 	void Tick()
 	{
-		
+		bool 	rxLevel 	= rxPin.Get();
+		txPin.Set();
 	}
 
 private:
@@ -33,8 +36,8 @@ private:
 	//
 	//
 	//
-	RxPinType 	rxPin;
-	TxPinType 	txPin;
+	RxPinType& 	rxPin;
+	TxPinType& 	txPin;
 
 };
 

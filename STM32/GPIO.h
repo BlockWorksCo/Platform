@@ -94,9 +94,9 @@ public:
         //((GPIO_TypeDef*)portAddress)->ODR   &= ~mask;
     }
     
-    uint16_t Get()
+    bool Get()
     {
-        return ((GPIO_TypeDef*)portAddress)->IDR & mask;
+        return (((GPIO_TypeDef*)portAddress)->IDR & mask) == 0;
     }
 
     void Poll()
