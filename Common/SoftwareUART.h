@@ -1,9 +1,19 @@
+//
+// Copyright (C) BlockWorks Consulting Ltd - All Rights Reserved.
+// Unauthorized copying of this file, via any medium is strictly prohibited.
+// Proprietary and confidential.
+// Written by Steve Tickle <Steve@BlockWorks.co>, September 2014.
+//
+
 
 
 
 
 #ifndef __SOFTWAREUART_H__
 #define __SOFTWAREUART_H__
+
+
+#include "Utilities.h"
 
 
 
@@ -172,7 +182,7 @@ private:
         static uint8_t      head        = 0;
 
         buffer[head]   = value;
-        head            = (head+1) % sizeof(buffer);
+        head            = (head+1) % NUMBER_OF_ELEMENTS(buffer);
     }
 
 
