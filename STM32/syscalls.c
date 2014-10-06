@@ -63,9 +63,9 @@ caddr_t _sbrk_r (struct _reent *r, int incr)
 }
 
 int _write(int file, char *ptr, int len) {
+    /*
 	int i;
 
-    /*
 	for(i = 0;i < len;i++) {
 		USART_SendData(USART2, (uint8_t)ptr[i]);
 		while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET){};

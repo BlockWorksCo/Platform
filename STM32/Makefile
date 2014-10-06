@@ -6,7 +6,7 @@ CC=arm-none-eabi-g++
 LD=arm-none-eabi-g++
 OBJCOPY=arm-none-eabi-objcopy 
 RM=rm
-CFLAGS= -g -O0 -Wall -std=c++11 -T$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/stm32_flash.ld -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -fsingle-precision-constant -Wdouble-promotion -mfpu=fpv4-sp-d16 -mfloat-abi=hard -nostdlib -fno-rtti -fno-exceptions -DSTM32F40XX -DUSE_STDPERIPH_DRIVER
+CFLAGS= -save-temps -g -O3 -Wall -std=c++11 -T$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/stm32_flash.ld -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -fsingle-precision-constant -Wdouble-promotion -mfpu=fpv4-sp-d16 -mfloat-abi=hard -nostdlib -fno-rtti -fno-exceptions -DSTM32F40XX -DUSE_STDPERIPH_DRIVER
 LDFLAGS=$(CFLAGS)  -lc 
 
 

@@ -17,17 +17,28 @@
 
 #include "Platform.h" 
 #include "stm32f4xx_gpio.h"
+#include "stm32f4xx.h"
+
+#define ODR_OFFSET                          (offsetof( GPIO_TypeDef, ODR))
+#define IDR_OFFSET                          (offsetof( GPIO_TypeDef, IDR))
+
+#define BITBAND_PERIPH_BASE  0x42000000
+#define SET_BIT_PERIPH(addx, bitN, value)   *( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) ) = value
+#define GET_BIT_PERIPH(addx, bitN)          *( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) )
+#define TOGGLE_BIT_PERIPH(addx, bitN)       *( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) )
 
 
+
 //
 //
 //
-template <uint32_t portAddress, uint16_t mask>
+template <uint32_t portAddress, uint8_t bitNumber>
 class STM32Output 
 {
 public:
 
-    STM32Output()
+    STM32Output() :
+        mask(1<<bitNumber)
     {
         GPIO_InitTypeDef    GPIO_InitStructure;
 
@@ -38,9 +49,7 @@ public:
         GPIO_InitStructure.GPIO_Speed     = GPIO_Speed_100MHz;
         GPIO_Init((GPIO_TypeDef*)portAddress, &GPIO_InitStructure);    
         
-        ((GPIO_TypeDef*)portAddress)->ODR   |= mask;
-        
-        //if(portAddress == GPIOD_BASE)
+        if(portAddress == GPIOD_BASE)
         {
 	        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
         }
@@ -54,19 +63,23 @@ public:
     
     void Set()
     {
-        ((GPIO_TypeDef*)portAddress)->ODR   |= mask;
+        SET_BIT_PERIPH(portAddress+ODR_OFFSET, bitNumber, 1);
     }
     
     void Set(uint16_t value)
     {
-        ((GPIO_TypeDef*)portAddress)->ODR   |= value;
+        SET_BIT_PERIPH(portAddress+ODR_OFFSET, bitNumber, value);
     }
     
     void Clear()
     {
-        ((GPIO_TypeDef*)portAddress)->ODR   &= ~mask;
+        SET_BIT_PERIPH(portAddress+ODR_OFFSET, bitNumber, 0);
     }
     
+
+private:
+
+    uint32_t    mask;
 };
 
 
@@ -80,40 +93,29 @@ public:
 //
 //
 template <  uint32_t portAddress, 
-            uint16_t mask,  
-            typename valueChangeDelegateType>
+            uint8_t bitNumber >
 class STM32Input 
 {
 public:
 
-    STM32Input(valueChangeDelegateType&  _valueChangeDelegate) :
-            valueChangeDelegate(_valueChangeDelegate)
+    STM32Input()
     {
         GPIO_InitTypeDef    GPIO_InitStructure;
 
-        GPIO_InitStructure.GPIO_Pin       = mask;
+        GPIO_InitStructure.GPIO_Pin       = 1<<bitNumber;
         GPIO_InitStructure.GPIO_Mode      = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_OType     = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd      = GPIO_PuPd_UP;
         GPIO_InitStructure.GPIO_Speed     = GPIO_Speed_50MHz;
         GPIO_Init((GPIO_TypeDef*)portAddress, &GPIO_InitStructure);    
-        
-        //((GPIO_TypeDef*)portAddress)->ODR   &= ~mask;
     }
     
+
     bool Get()
     {
-        return (((GPIO_TypeDef*)portAddress)->IDR & mask) == 0;
+        return GET_BIT_PERIPH( portAddress+IDR_OFFSET, bitNumber );
     }
 
-    void Poll()
-    {
-        valueChangeDelegate();
-    }
-    
-private:
-
-    valueChangeDelegateType&    valueChangeDelegate;
 };
 
 

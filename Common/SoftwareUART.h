@@ -20,6 +20,7 @@
 
 template <  typename RxPinType,
             typename TxPinType,
+            uint32_t BitPeriod,
             uint8_t  SamplesPerBit,
             uint8_t  ConsecutiveSamplesForBit >
 class SoftwareUART
@@ -48,7 +49,7 @@ public:
         static uint8_t      sampleCount         = 0;
 
         //
-        // When sn edge is detected, reset the sampleCount.
+        // When an edge is detected, reset the sampleCount.
         //
         if( previousLevel != rxLevel )
         {
