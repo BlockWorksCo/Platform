@@ -7,7 +7,7 @@ LD=arm-none-eabi-g++
 OBJCOPY=arm-none-eabi-objcopy 
 RM=rm
 CFLAGS= -save-temps -g -O3 -Wall -std=c++11 -T$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/stm32_flash.ld -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -fsingle-precision-constant -Wdouble-promotion -mfpu=fpv4-sp-d16 -mfloat-abi=hard -nostdlib -fno-rtti -fno-exceptions -DSTM32F40XX -DUSE_STDPERIPH_DRIVER
-LDFLAGS=$(CFLAGS)  -lc 
+LDFLAGS=$(CFLAGS) -D__FPU_PRESENT -lc 
 
 
 
@@ -15,6 +15,7 @@ INCLUDES+=-I./
 INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/Common
 INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/CMSIS/Device/ST/STM32F4xx/Include
 INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/inc
+INCLUDES+=-I$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)/CMSIS/STM32F4xx_DSP_StdPeriph_Lib_V1.1.0/Libraries/CMSIS/Include
 
 VPATH+=./
 VPATH+=$(BLOCKWORKS_PLATFORM_BASE)/$(PLATFORM)
