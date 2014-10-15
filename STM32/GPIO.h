@@ -42,17 +42,48 @@ public:
     {
         GPIO_InitTypeDef    GPIO_InitStructure;
 
-        GPIO_InitStructure.GPIO_Pin       = mask;
-        GPIO_InitStructure.GPIO_Mode      = GPIO_Mode_OUT;
-        GPIO_InitStructure.GPIO_OType     = GPIO_OType_PP;
-        GPIO_InitStructure.GPIO_PuPd      = GPIO_PuPd_UP;
-        GPIO_InitStructure.GPIO_Speed     = GPIO_Speed_100MHz;
-        GPIO_Init((GPIO_TypeDef*)portAddress, &GPIO_InitStructure);    
-        
+        if(portAddress == GPIOA_BASE)
+        {
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+        }
+        if(portAddress == GPIOB_BASE)
+        {
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+        }
+        if(portAddress == GPIOC_BASE)
+        {
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+        }
         if(portAddress == GPIOD_BASE)
         {
-	        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
         }
+        if(portAddress == GPIOE_BASE)
+        {
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+        }
+        if(portAddress == GPIOF_BASE)
+        {
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
+        }
+        if(portAddress == GPIOG_BASE)
+        {
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
+        }
+        if(portAddress == GPIOH_BASE)
+        {
+            RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOH, ENABLE);
+        }
+
+        //
+        // Debug pin.
+        //
+        GPIO_InitStructure.GPIO_Pin        = mask;
+        GPIO_InitStructure.GPIO_Mode       = GPIO_Mode_OUT;
+        GPIO_InitStructure.GPIO_OType      = GPIO_OType_PP;
+        GPIO_InitStructure.GPIO_Speed      = GPIO_Speed_100MHz;
+        GPIO_InitStructure.GPIO_PuPd       = GPIO_PuPd_UP;
+        GPIO_Init((GPIO_TypeDef*)portAddress, &GPIO_InitStructure);    
     }
 
     
@@ -79,7 +110,7 @@ public:
 
 private:
 
-    uint32_t    mask;
+    uint16_t    mask;
 };
 
 

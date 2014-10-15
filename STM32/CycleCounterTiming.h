@@ -55,6 +55,15 @@ public:
 
 
     //
+    // Return the current nanosecond tick counter value.
+    //
+    TimestampType GetNanosecondTick()
+    {
+        return NanosecondCounter();
+    }
+
+
+    //
     // Busy wait for the specified number of milliseconds.
     //
     void BusyWait(uint32_t numberOfMilliseconds)
@@ -84,15 +93,26 @@ private:
     //
     uint32_t CycleCount()
     {
-        return DWT->CYCCNT;
+        return DWTx.CYCCNT;
     }
 
 
     //
     //
     //
+    uint32_t NanosecondCounter()
+    {
+        return CycleCount()/(ClockRateInHz/100000000);
+    }
+
+    //
+    //
+    //
     uint32_t MicrosecondCounter()
     {
+        //volatile uint32_t   cycleCount = CycleCount();
+        //volatile uint32_t   usCount    = cycleCount/(ClockRateInHz/1000000);
+        //return usCount;
         return CycleCount()/(ClockRateInHz/1000000);
     }
 
