@@ -46,6 +46,15 @@ public:
 
 
     //
+    // Return the current tick counter value.
+    //
+    TimestampType GetTick()
+    {
+        return CycleCount();
+    }
+
+
+    //
     // Return the current millisecond tick counter value.
     //
     TimestampType GetMicrosecondTick()
