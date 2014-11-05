@@ -194,7 +194,7 @@ public:
             //
             if(timedEvents[i].usedFlag == true)
             {
-                if(currentTime == timedEvents[i].firingTimestamp)
+                if(currentTime >= timedEvents[i].firingTimestamp)
                 {
                     //
                     // Call the event handler.
