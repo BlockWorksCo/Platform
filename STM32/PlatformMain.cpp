@@ -134,6 +134,14 @@ extern "C" void __cxa_pure_virtual()
 //
 //
 //
+__weak void Preconstructors()
+{
+
+}
+
+//
+//
+//
 int main()
 {
 	SystemInit();
@@ -141,6 +149,11 @@ int main()
     //printf("PlatformMain started.\n");
 
     //init();
+
+	//
+	//
+	//
+	Preconstructors();
 
 	//
 	//Call C++ global constructors
