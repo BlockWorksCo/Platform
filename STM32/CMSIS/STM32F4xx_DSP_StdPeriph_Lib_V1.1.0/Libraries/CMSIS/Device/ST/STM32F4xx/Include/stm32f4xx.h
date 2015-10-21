@@ -109,7 +109,7 @@
 #endif /* HSE_STARTUP_TIMEOUT */   
 
 #if !defined  (HSI_VALUE)   
-  #define HSI_VALUE    ((uint32_t)16000000) /*!< Value of the Internal oscillator in Hz*/
+  #define HSI_VALUE    ((uint32_t)8000000) /*!< Value of the Internal oscillator in Hz*/
 #endif /* HSI_VALUE */   
 
 /**

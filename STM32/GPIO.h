@@ -25,7 +25,7 @@
 #define BITBAND_PERIPH_BASE  0x42000000
 #define SET_BIT_PERIPH(addx, bitN, value)   *( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) ) = value
 #define GET_BIT_PERIPH(addx, bitN)          *( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) )
-#define TOGGLE_BIT_PERIPH(addx, bitN)       *( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) )
+#define TOGGLE_BIT_PERIPH(addx, bitN)       *( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) ) = !(*( (volatile unsigned long*) ((BITBAND_PERIPH_BASE + ((addx)-PERIPH_BASE)*32 + (bitN*4))) ))
 
 
 
@@ -89,21 +89,25 @@ public:
     
     void Toggle()
     {
-        ((GPIO_TypeDef*)portAddress)->ODR   ^= mask;
+        //((GPIO_TypeDef*)portAddress)->ODR   ^= mask;
+        TOGGLE_BIT_PERIPH( portAddress+ODR_OFFSET, bitNumber );
     }
     
     void Set()
     {
+        //((GPIO_TypeDef*)portAddress)->ODR   |= mask;
         SET_BIT_PERIPH(portAddress+ODR_OFFSET, bitNumber, 1);
     }
     
     void Set(uint16_t value)
     {
+        //((GPIO_TypeDef*)portAddress)->ODR   = (((GPIO_TypeDef*)portAddress)->ODR & ~mask) | (value<<bitNumber);
         SET_BIT_PERIPH(portAddress+ODR_OFFSET, bitNumber, value);
     }
     
     void Clear()
     {
+        //((GPIO_TypeDef*)portAddress)->ODR   &= ~mask;
         SET_BIT_PERIPH(portAddress+ODR_OFFSET, bitNumber, 0);
     }
     

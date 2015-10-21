@@ -28,20 +28,21 @@ int _read(int file, char *ptr, int len) {
 }
 
 /* Register name faking - works in collusion with the linker.  */
-register char * stack_ptr asm ("sp");
+//register char * stack_ptr asm ("sp");
 
 caddr_t _sbrk_r (struct _reent *r, int incr)
 {
-	extern char   end asm ("end"); /* Defined by the linker.  */
-	static char * heap_end;
-	char *        prev_heap_end;
+#if 0	
+     	extern char   end asm ("end"); /* Defined by the linker.  */
+     	static char * heap_end;
+     	char *        prev_heap_end;
 
 	if (heap_end == NULL)
 		heap_end = & end;
 
 	prev_heap_end = heap_end;
 
-	if (heap_end + incr > stack_ptr)
+	//if (heap_end + incr > stack_ptr)
 	{
 		/* Some of the libstdc++-v3 tests rely upon detecting
         out of memory errors, so do not abort here.  */
@@ -55,11 +56,14 @@ caddr_t _sbrk_r (struct _reent *r, int incr)
 		//errno = ENOMEM;
 		return (caddr_t) -1;
 #endif
+
 	}
 
 	heap_end += incr;
 
 	return (caddr_t) prev_heap_end;
+#endif
+	return NULL;
 }
 
 int _write(int file, char *ptr, int len) {

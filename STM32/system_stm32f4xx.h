@@ -26,7 +26,7 @@
 /** @addtogroup stm32f4xx_system
   * @{
   */  
-  
+
 /**
   * @brief Define to prevent recursive inclusion
   */
